@@ -3,7 +3,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-from src.logger import logger
+"from src.logger import logger"
+from logger import logger
 
 
 def calculate_mse(frame1, frame2):
@@ -128,25 +129,26 @@ class FramesExtractor:
 
         # Filter saved frames based on their deviation from the average frame
         filtered_frames = []
-        mse_threshold = 50  # Adjust this threshold as needed
+        mse_threshold = 300  # Adjust this threshold as needed
         for i, frame in enumerate(saved_frames_gray):
             mse = calculate_mse(frame, mean_frame)
             if mse < mse_threshold:
                 filtered_frames.append(saved_frames[i])  # Keep frames close to the average
 
         saved_frames = filtered_frames
+    
         # Check if any frames passed the final filtering
         if not filtered_frames:
             raise ValueError("No frames passed the final MSE filtering process. Check your MSE threshold.")
 
         # # Save the final filtered frames
-        # if True:
-        #     output_dir = os.path.join("frames", video_name)
-        #     cleaned_output_dir = os.path.join(output_dir, "cleaned")
-        #     os.makedirs(cleaned_output_dir, exist_ok=True)
-        #     for idx, frame in enumerate(filtered_frames):
-        #         frame_filename = os.path.join(cleaned_output_dir, f"cleaned_frame_{idx}.png")
-        #         cv2.imwrite(frame_filename, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # Save final version
+        if True:
+            output_dir = os.path.join("frames", video_name)
+            cleaned_output_dir = os.path.join(output_dir, "cleaned")
+            os.makedirs(cleaned_output_dir, exist_ok=True)
+            for idx, frame in enumerate(filtered_frames):
+                frame_filename = os.path.join(cleaned_output_dir, f"cleaned_frame_{idx}.png")
+                cv2.imwrite(frame_filename, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # Save final version
         if self.show_plots:
             # Plot the average frame
             plt.figure(figsize=(10, 6))
@@ -190,11 +192,11 @@ def main():
     """
     Test the FramesExtractor class here.
     """
-    video_path =  "../videos/video1.mp4"
-    frame_per_second = 25  # Example: extract 2 frames per second
+    video_path =  r"G:\POLIMI_ACADEMICS\First_Year\1st_Semester\099993_Image_Analysis_&_Computer_Vision\Projects_&_Homeworks\Project\IACV-Project\data\raw_videos\piano_video_1.mp4"
+    frame_per_second = 10  # Example: extract 2 frames per second
     deviation_threshold = 1  # Threshold for standard deviation filtering
 
-    frames_extractor = FramesExtractor(frame_per_second, 300, deviation_threshold)
+    frames_extractor = FramesExtractor(frame_per_second, 600, deviation_threshold)
     extracted_frames = frames_extractor(video_path)
 
     print(len(extracted_frames))
@@ -202,8 +204,8 @@ def main():
     plt.imshow(extracted_frames[0])
     plt.show()
 
-    # TODO: Refika add parameter save_path to the init of FramesExtractor
-    # TODO: Alisa derive optimal frame_per_second value
+    # TODO: add parameter save_path to the init of FramesExtractor
+    # TODO: derive optimal frame_per_second value
 
     print(f"Extracted {len(extracted_frames)} frames. Frames saved in 'frames' folder.")
 
