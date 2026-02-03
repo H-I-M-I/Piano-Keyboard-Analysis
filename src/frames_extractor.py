@@ -3,7 +3,6 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-"from src.logger import logger"
 from logger import logger
 
 
