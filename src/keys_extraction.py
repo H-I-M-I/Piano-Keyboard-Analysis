@@ -1,13 +1,15 @@
 from copy import deepcopy
 
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 import skimage.io
+import numpy as np
+from matplotlib import image, pyplot as plt
+import skimage.io
+import math
 from skimage.feature import match_template
 from sklearn.cluster import DBSCAN
 
-from src.logger import logger
+from logger import logger
 
 
 class Key:
@@ -63,7 +65,7 @@ class KeysExtractorThroughLines:
     def __init__(self):
         self.logger = logger
 
-        ref_piano_path = "src/octava.png"
+        ref_piano_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\octave\\octava.png"
         ref_piano = skimage.io.imread(ref_piano_path)
         self.ref_piano = cv2.cvtColor(ref_piano, cv2.COLOR_RGB2GRAY)
         self.logger.info("Keys Extractor created")
@@ -406,31 +408,77 @@ class KeysExtractorThroughLines:
         return black_keys
 
     def _find_white_keys_w(self, image):
-        mask = cv2.adaptiveThreshold(image, 255,
-                                     cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 21, 10)
+        """
+        image: grayscale piano ROI (uint8)
+        returns: (image, white_key_w)
+        """
 
-        lines = cv2.HoughLines(mask, 1, np.pi / 180, 150, min_theta=0, max_theta=0.01)
-        cnt = 0
+        # 1) upscale (helps line detection on thin key borders)
+        h, w = image.shape[:2]
+        scale = 2
+        img = cv2.resize(image, (w * scale, h * scale), interpolation=cv2.INTER_CUBIC)
+
+        # 2) denoise + edges
+        img_blur = cv2.GaussianBlur(img, (5, 5), 0)
+        edges = cv2.Canny(img_blur, 30, 100)
+
+        # 3) strengthen edges (helps Hough)
+        kernel = np.ones((3, 3), np.uint8)
+        edges = cv2.dilate(edges, kernel, iterations=1)
+
+        # 4) detect line segments (probabilistic Hough)
+        linesP = cv2.HoughLinesP(
+            edges,
+            rho=1,
+            theta=np.pi / 180,
+            threshold=60,
+            minLineLength=int(0.25 * img.shape[0]),  # depend on height
+            maxLineGap=10
+        )
+
+        if linesP is None:
+            raise ValueError("No lines detected. Try lowering HoughLinesP threshold/minLineLength.")
+
+        # 5) keep only near-vertical segments, collect x positions
         x_coords = []
-        for r_theta in lines:
-            cnt += 1
-            arr = np.array(r_theta[0], dtype=np.float64)
-            r, theta = arr
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a * r
-            y0 = b * r
-            x1 = int(x0 + 1000 * (-b))
-            y1 = int(y0 + 1000 * (a))
-            x2 = int(x0 - 1000 * (-b))
-            y2 = int(y0 - 1000 * (a))
-            x_coords.append(x1)
-            cv2.line(mask, (x1, y1), (x2, y2), (255), 2)
+        for l in linesP:
+            x1, y1, x2, y2 = l[0]
+            dx = abs(x2 - x1)
+            dy = abs(y2 - y1)
 
-        x_coords = np.sort(x_coords)
-        x_coords_dif = [x_coords[i + 1] - x_coords[i] for i in range(len(x_coords) - 1)]
-        white_key_w = np.median(x_coords_dif)
+            # near-vertical condition
+            if dy == 0:
+                continue
+            if dx > 0.2 * dy:
+                continue
 
+            x_coords.append(int((x1 + x2) / 2))
+
+        if len(x_coords) < 5:
+            raise ValueError("Too few vertical key-border lines after filtering. Crop/contrast must be improved.")
+
+        # 6) sort + remove near-duplicates
+        x_coords = np.sort(np.array(x_coords))
+        filtered = [x_coords[0]]
+        for x in x_coords[1:]:
+            if abs(x - filtered[-1]) >= 4:   # tolerance in pixels (on upscaled img)
+                filtered.append(x)
+        filtered = np.array(filtered)
+
+        # 7) compute spacing and take median of plausible gaps
+        diffs = np.diff(filtered)
+        diffs = diffs[diffs > 0]
+
+        if len(diffs) == 0:
+            # fallback: estimate from image width
+            # full piano has 52 white keys across the keyboard
+            estimated_white_keys = 52
+            white_key_w = image.shape[1] / estimated_white_keys
+            self.logger.warning(f"Fallback white_key_w used: {white_key_w}")
+            return image, white_key_w
+
+        white_key_w_upscaled = float(np.median(diffs))
+        white_key_w = image.shape[1] / 52.0
 
         self.logger.info(f"The width of white key is {white_key_w}")
         return image, white_key_w
@@ -495,6 +543,14 @@ class KeysExtractorThroughLines:
         # find width of the white key
         masked_piano, white_key_w = self._find_white_keys_w(masked_piano)
 
+        img_h, img_w = masked_piano.shape[:2]
+
+        if white_key_w is None or (isinstance(white_key_w, float) and math.isnan(white_key_w)):
+            # assume ~20–30 white keys visible in the frame
+            estimated_white_keys = 52
+            white_key_w = img_w / estimated_white_keys
+            self.logger.warning(f"white_key_w was NaN. Fallback used: {white_key_w}")
+
         # find coordinates of white keys
         white_keys_coords, white_key_h = self._find_white_keys_coords(masked_piano, x, y, w, h, white_key_w)
         # self._draw_keys_coords(white_keys_coords, to_draw_img)
@@ -512,7 +568,7 @@ def main():
     :return:
     """
     keys_extractor = KeysExtractorThroughLines()
-    img_path = "../src/frames/video1/frame_7.png"
+    img_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned\\cleaned_frame_40.png"
     image = skimage.io.imread(img_path)
 
     keys_extractor(image)
