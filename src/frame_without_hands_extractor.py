@@ -109,7 +109,7 @@ class FrameWithoutHandsExtractor:
 
 def main():
     # Load frames from a directory into a list
-    frames_dir = "C:\\Users\\Friday\\Desktop\\IACV PROJECT\\PianoPressedKeysDetection\\frames\\video1\\cleaned"
+    frames_dir = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned"
     frame_paths = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.png')])
     frames = [cv2.imread(frame_path) for frame_path in frame_paths]
 
@@ -118,8 +118,12 @@ def main():
 
     # Extract a clear piano frame from the frames list
     try:
-        clear_frame_path = extractor.extract_clear_frame(frames)
-        print(f"Clear piano frame saved at: {clear_frame_path}")
+        clear_frame = extractor(frames)
+        print(f"Clear piano frame extracted: {clear_frame}")
+        os.makedirs("outputs", exist_ok=True)
+        cv2.imwrite("outputs/frame_without_hands.png", clear_frame)
+        print("Saved: outputs/frame_without_hands.png")
+
 
     except ValueError as e:
         print(f"Error: {e}")
