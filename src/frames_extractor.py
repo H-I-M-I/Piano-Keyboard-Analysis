@@ -203,9 +203,6 @@ def main():
     plt.imshow(extracted_frames[0])
     plt.show()
 
-    # TODO: add parameter save_path to the init of FramesExtractor
-    # TODO: derive optimal frame_per_second value
-
     print(f"Extracted {len(extracted_frames)} frames. Frames saved in 'frames' folder.")
 
 
