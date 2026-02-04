@@ -3,13 +3,41 @@ from copy import deepcopy
 import cv2
 import skimage.io
 import numpy as np
+import os
 from matplotlib import image, pyplot as plt
 import skimage.io
 import math
+import inspect
 from skimage.feature import match_template
 from sklearn.cluster import DBSCAN
 
 from logger import logger
+
+import os
+import cv2
+import numpy as np
+
+def _save_step(name, img):
+    os.makedirs("outputs/key_steps", exist_ok=True)
+    if img is None:
+        return
+
+    # uint8 safety
+    if img.dtype != np.uint8:
+        img = np.clip(img, 0, 255).astype(np.uint8)
+
+    # grayscale
+    if len(img.shape) == 2:
+        cv2.imwrite(f"outputs/key_steps/{name}.png", img)
+        return
+
+    # RGB/RGBA -> BGR for OpenCV saving
+    if img.shape[2] == 4:
+        out = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+    else:
+        out = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    cv2.imwrite(f"outputs/key_steps/{name}.png", out)
 
 
 class Key:
@@ -87,8 +115,6 @@ class KeysExtractorThroughLines:
 
         # find the biggest countour (c) by the area
         c = max(contours, key=cv2.contourArea)
-
-
 
         return image_gray, c
 
@@ -198,12 +224,100 @@ class KeysExtractorThroughLines:
             score = 1 / score
 
         return score
+    
+    
+    def _make_white_key_obj(self, key_img, x1, y1, x2, y2, name):
+        # WhiteKey(key_img, y_ul, x_ul, y_dr, x_dr, name)
+        return WhiteKey(
+            key_img,
+            int(y1), int(x1),
+            int(y2), int(x2),
+            str(name)
+        )
+
+
+    def _build_white_keys_grid(self, x, y, w, h, white_key_w, white_key_h, masked_piano):
+        """
+        Stable white keys are generated as a uniform grid.
+        This avoids border noise problems.
+        Coordinates are in FULL IMAGE system (x,y are ROI offsets).
+        """
+
+        # safety
+        white_key_w = int(max(6, round(float(white_key_w))))
+        white_key_h = int(max(20, round(float(white_key_h))))
+
+        # limits inside ROI
+        x_start = int(x + 2)
+        x_end = int(x + w - 2)
+
+        # clamp height inside image
+        img_h = masked_piano.shape[0]
+        y1 = int(max(0, y))
+        y2 = int(min(img_h - 1, y + white_key_h))
+
+        white_keys = {}
+        notes = ["C","D","E","F","G","A","B"]
+
+        xi = x_start
+        idx = 0
+
+        while xi + white_key_w < x_end:
+            name = f"{notes[idx % 7]}_{idx}"
+
+            k = WhiteKey(
+                masked_piano,
+                int(y1), int(xi),
+                int(y2), int(xi + white_key_w),
+                name
+            )
+
+            white_keys[name] = k
+
+            xi += white_key_w
+            idx += 1
+
+
+        return white_keys
+
 
     def _find_white_keys_coords(self, masked_piano, x, y, w, h, white_key_w):
+        masked_piano = masked_piano.astype(np.int8)
+
         keys_dict = {}
         patch = masked_piano[y:y + h, x:x + w, ...]
+
+        # --- HARD FIX for adaptiveThreshold input ---
+        print("PATCH BEFORE:", patch.shape, patch.dtype)
+
+        # if patch is RGBA/RGB/BGR, convert to gray
+        if len(patch.shape) == 3:
+            if patch.shape[2] == 4:
+                patch = cv2.cvtColor(patch, cv2.COLOR_RGBA2GRAY)
+            else:
+                patch = cv2.cvtColor(patch, cv2.COLOR_RGB2GRAY)
+
+        # force uint8
+        if patch.dtype != np.uint8:
+            # if patch is float in [0,1], scale to [0,255]
+            if patch.dtype in [np.float32, np.float64] and patch.max() <= 1.0:
+                patch = (patch * 255.0).astype(np.uint8)
+            else:
+                patch = np.clip(patch, 0, 255).astype(np.uint8)
+
+        # make it contiguous (OpenCV sometimes fails without this)
+        patch = np.ascontiguousarray(patch)
+
+        print("PATCH AFTER:", patch.shape, patch.dtype)
+
         patch = cv2.adaptiveThreshold(patch, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                       cv2.THRESH_BINARY, 199, 5)
+        
+        # ensure patch is grayscale uint8 for adaptiveThreshold
+        if len(patch.shape) == 3:
+            patch = cv2.cvtColor(patch, cv2.COLOR_RGB2GRAY)  # or BGR2GRAY if patch is BGR
+        if patch.dtype != np.uint8:
+            patch = np.clip(patch, 0, 255).astype(np.uint8)
 
         ref_piano_h, ref_piano_w = self.ref_piano.shape[:2]
         ref_piano_new_w = int(white_key_w * 7)
@@ -329,7 +443,10 @@ class KeysExtractorThroughLines:
         patch = cv2.adaptiveThreshold(patch, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                       cv2.THRESH_BINARY, 199, 5)
 
-        black_key_y = int(white_keys_coords["C_1"].coords()[0] - y + white_key_h / 3)
+        # use first white key as reference instead of named key
+        first_key = list(white_keys_coords.values())[0]
+        black_key_y = int(first_key.coords()[0] - y + white_key_h / 3)
+
         black_w_list = []
 
         cur_len = 0
@@ -409,83 +526,64 @@ class KeysExtractorThroughLines:
 
     def _find_white_keys_w(self, image):
         """
-        image: grayscale piano ROI (uint8)
+        image: grayscale ROI (uint8)
         returns: (image, white_key_w)
         """
 
-        # 1) upscale (helps line detection on thin key borders)
-        h, w = image.shape[:2]
-        scale = 2
-        img = cv2.resize(image, (w * scale, h * scale), interpolation=cv2.INTER_CUBIC)
+        # 1) smooth
+        gray = cv2.GaussianBlur(image, (5, 5), 0)
 
-        # 2) denoise + edges
-        img_blur = cv2.GaussianBlur(img, (5, 5), 0)
-        edges = cv2.Canny(img_blur, 30, 100)
+        # 2) vertical edges only (Sobel x)
+        gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+        gx = np.abs(gx)
 
-        # 3) strengthen edges (helps Hough)
-        kernel = np.ones((3, 3), np.uint8)
-        edges = cv2.dilate(edges, kernel, iterations=1)
+        # 3) use only the key area (ignore top border reflections)
+        h, w = gx.shape
+        y1 = int(0.15 * h)
+        y2 = int(0.95 * h)
+        gx_roi = gx[y1:y2, :]
 
-        # 4) detect line segments (probabilistic Hough)
-        linesP = cv2.HoughLinesP(
-            edges,
-            rho=1,
-            theta=np.pi / 180,
-            threshold=60,
-            minLineLength=int(0.25 * img.shape[0]),  # depend on height
-            maxLineGap=10
-        )
+        # 4) vertical projection (sum of vertical edge strength per column)
+        proj = gx_roi.sum(axis=0)
 
-        if linesP is None:
-            raise ValueError("No lines detected. Try lowering HoughLinesP threshold/minLineLength.")
+        # 5) normalize + smooth 1D signal
+        proj = proj / (proj.max() + 1e-9)
+        proj = cv2.GaussianBlur(proj.reshape(1, -1), (1, 31), 0).ravel()
 
-        # 5) keep only near-vertical segments, collect x positions
-        x_coords = []
-        for l in linesP:
-            x1, y1, x2, y2 = l[0]
-            dx = abs(x2 - x1)
-            dy = abs(y2 - y1)
+        # 6) find peaks (simple threshold + local max)
+        thr = 0.35  # loosen if too few peaks: 0.25
+        peaks = []
+        for x in range(2, w - 2):
+            if proj[x] > thr and proj[x] >= proj[x - 1] and proj[x] >= proj[x + 1]:
+                peaks.append(x)
 
-            # near-vertical condition
-            if dy == 0:
-                continue
-            if dx > 0.2 * dy:
-                continue
+        if len(peaks) < 10:
+            raise ValueError("Too few vertical borders found from projection. Increase contrast or lower thr.")
 
-            x_coords.append(int((x1 + x2) / 2))
-
-        if len(x_coords) < 5:
-            raise ValueError("Too few vertical key-border lines after filtering. Crop/contrast must be improved.")
-
-        # 6) sort + remove near-duplicates
-        x_coords = np.sort(np.array(x_coords))
-        filtered = [x_coords[0]]
-        for x in x_coords[1:]:
-            if abs(x - filtered[-1]) >= 4:   # tolerance in pixels (on upscaled img)
+        # 7) remove near-duplicates
+        filtered = [peaks[0]]
+        for x in peaks[1:]:
+            if x - filtered[-1] >= 4:
                 filtered.append(x)
         filtered = np.array(filtered)
 
-        # 7) compute spacing and take median of plausible gaps
+        # 8) estimate typical spacing (median of differences)
         diffs = np.diff(filtered)
-        diffs = diffs[diffs > 0]
-
+        diffs = diffs[(diffs >= 4) & (diffs <= 80)]  # plausible spacing in ROI
         if len(diffs) == 0:
-            # fallback: estimate from image width
-            # full piano has 52 white keys across the keyboard
-            estimated_white_keys = 52
-            white_key_w = image.shape[1] / estimated_white_keys
-            self.logger.warning(f"Fallback white_key_w used: {white_key_w}")
-            return image, white_key_w
+            raise ValueError("No plausible border spacings from projection.")
 
-        white_key_w_upscaled = float(np.median(diffs))
-        white_key_w = image.shape[1] / 52.0
+        white_key_w = float(np.median(diffs))
 
         self.logger.info(f"The width of white key is {white_key_w}")
         return image, white_key_w
 
+
     def _find_orientation(self, image, y, h):
         mask = cv2.adaptiveThreshold(image, 255,
                                      cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 10)
+        _save_step("04_white_width_mask", mask)
+
         rows_max = np.mean(mask, axis=1)
         rows_piano = rows_max[y:y + h]
         first_part_mean = np.mean(rows_piano[:len(rows_piano) // 2])
@@ -502,14 +600,12 @@ class KeysExtractorThroughLines:
         and black keys in the current image
         (the image should be without hands!) """
 
-
-
         if self.debug:
             # simulate rotated image
             image = self.rotate_image(image, 0)
 
-
         to_draw_img = deepcopy(image)
+        _save_step("01_full_input", image)
 
         # find the initial piano contour
         image_gray, c = self._find_piano_contour(image)
@@ -520,7 +616,6 @@ class KeysExtractorThroughLines:
         # rotate image on this angle
         image = self.rotate_image(image, angle)
 
-
         to_draw_img = self.rotate_image(to_draw_img, angle)
 
         # find the new (angle is 0) piano contour
@@ -528,9 +623,11 @@ class KeysExtractorThroughLines:
 
         # draw piano contour on image
         x, y, w, h = self._draw_contour(image, c)
+        _save_step("02_roi_box", image)
 
         # delete irrelevant info from image
         masked_piano = self._create_piano_masked(image_gray, c)
+        _save_step("03_masked_piano", masked_piano)
 
         # if the piano is upside-down, it should be rotated by 180 degrees
         is_correct_orientation = self._find_orientation(masked_piano, y, h)
@@ -552,12 +649,65 @@ class KeysExtractorThroughLines:
             self.logger.warning(f"white_key_w was NaN. Fallback used: {white_key_w}")
 
         # find coordinates of white keys
-        white_keys_coords, white_key_h = self._find_white_keys_coords(masked_piano, x, y, w, h, white_key_w)
+        # white_keys_coords, white_key_h = self._find_white_keys_coords(masked_piano, x, y, w, h, white_key_w)
         # self._draw_keys_coords(white_keys_coords, to_draw_img)
+
+        # stable height for white keys (use ROI height)
+        white_key_h = int(0.95 * h)
+
+        # build uniform white-key grid in full-image coordinates
+        white_keys_coords = self._build_white_keys_grid(x, y, w, h, white_key_w, white_key_h, masked_piano)
+
+        # --- FIX: force reasonable white-key widths ---
+        w_target = int(round(white_key_w))
+        for k in white_keys_coords.values():
+            # coords() returns (y1,x1,y2,x2) in your code style
+            y1, x1, y2, x2 = k.coords()
+
+            # keep left border, force width
+            x2_new = x1 + w_target
+
+            # prevent overflow outside image
+            x2_new = min(x2_new, masked_piano.shape[1] - 1)
+
+            # write back (adjust attribute names if different)
+            k.x2 = x2_new
+
+
+        # white-only overlay
+        white_vis = deepcopy(to_draw_img)
+        if len(white_vis.shape) == 2:
+            white_vis = cv2.cvtColor(white_vis, cv2.COLOR_GRAY2RGB)
+
+        for k in white_keys_coords.values():
+            y1, x1, y2, x2 = k.coords()
+            cv2.rectangle(white_vis, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        _save_step("05_white_keys_only", white_vis)
+
 
         # find h and w of black keys
         black_key_w = self._find_black_keys_w(masked_piano, x, y, w, h, white_key_h, white_keys_coords)
         black_keys_coords = self._find_black_keys_coords(masked_piano, black_key_w, white_keys_coords)
+        
+        # black-only overlay
+        black_vis = deepcopy(to_draw_img)
+        if len(black_vis.shape) == 2:
+            black_vis = cv2.cvtColor(black_vis, cv2.COLOR_GRAY2RGB)
+
+        for k in black_keys_coords.values():
+            y1, x1, y2, x2 = k.coords()
+            cv2.rectangle(black_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)  # will look red after save_step conversion
+
+        _save_step("06_black_keys_only", black_vis)
+
+        # combined overlay
+        final_vis = deepcopy(white_vis)
+        for k in black_keys_coords.values():
+            y1, x1, y2, x2 = k.coords()
+            cv2.rectangle(final_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+        _save_step("07_final_white_black", final_vis)
 
         return white_keys_coords, black_keys_coords, angle
 
@@ -568,7 +718,7 @@ def main():
     :return:
     """
     keys_extractor = KeysExtractorThroughLines()
-    img_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned\\cleaned_frame_40.png"
+    img_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned\\cleaned_frame_2.png"
     image = skimage.io.imread(img_path)
 
     keys_extractor(image)

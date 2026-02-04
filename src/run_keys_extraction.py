@@ -14,7 +14,7 @@ def main():
     os.makedirs("outputs/keys", exist_ok=True)
 
     # load your chosen background image
-    image = skimage.io.imread("outputs/frame_without_hands.png")
+    image = skimage.io.imread("outputs/frame_without_hands2.png")
 
     extractor = KeysExtractorThroughLines()
     white_keys_coords, black_keys_coords, angle = extractor(image)
@@ -35,6 +35,21 @@ def main():
     print("Saved: outputs/keys/white_keys.json")
     print("Saved: outputs/keys/black_keys.json")
     print("Saved: outputs/keys/rotation_angle.txt")
+
+
+    with open("outputs/keys/white_keys.json","r") as f:
+        d = json.load(f)
+
+    xs = []
+    ws = []
+    for _, v in d.items():
+        x1, x2 = v["x_ul"], v["x_dr"]
+        xs += [x1, x2]
+        ws.append(x2 - x1)
+
+    print("x range:", min(xs), max(xs))
+    print("min width:", min(ws), "median width:", sorted(ws)[len(ws)//2], "max width:", max(ws))
+
 
     print("image shape:", image.shape)
 
