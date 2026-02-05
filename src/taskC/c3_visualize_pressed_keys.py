@@ -74,7 +74,11 @@ def main():
     tips = pd.read_csv(FINGERTIPS).set_index("frame_id")
     pressed_df = pd.read_csv(PRESSED_KEYS).set_index("frame_id")
 
-    files = sorted([p for p in FRAMES_DIR.glob("cleaned_frame_*.png")])
+    def _sort_key(p: Path):
+        fid = _parse_frame_id(p.name)
+        return (fid is None, fid if fid is not None else 10**18)
+
+    files = sorted([p for p in FRAMES_DIR.glob("cleaned_frame_*.png")], key=_sort_key)
     if not files:
         raise FileNotFoundError(f"No frames found in {FRAMES_DIR}")
 
