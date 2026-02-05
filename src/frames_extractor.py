@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+import argparse
 import matplotlib.pyplot as plt
 
 from logger import logger
@@ -62,7 +63,7 @@ class FramesExtractor:
         video_name = os.path.splitext(os.path.basename(video_path))[0]
 
         if self.save_frames:
-            output_dir = os.path.join("frames", video_name)
+            output_dir = os.path.join("data", "frames", video_name)
             os.makedirs(output_dir, exist_ok=True)
 
         # Open the video file
@@ -142,7 +143,7 @@ class FramesExtractor:
 
         # # Save the final filtered frames
         if True:
-            output_dir = os.path.join("frames", video_name)
+            output_dir = os.path.join("data", "frames", video_name)
             cleaned_output_dir = os.path.join(output_dir, "cleaned")
             os.makedirs(cleaned_output_dir, exist_ok=True)
             for idx, frame in enumerate(filtered_frames):
@@ -188,22 +189,33 @@ class FramesExtractor:
 
 
 def main():
-    """
-    Test the FramesExtractor class here.
-    """
-    video_path =  r"G:\POLIMI_ACADEMICS\First_Year\1st_Semester\099993_Image_Analysis_&_Computer_Vision\Projects_&_Homeworks\Project\IACV-Project\data\raw_videos\piano_video_1.mp4"
-    frame_per_second = 10  # Example: extract 2 frames per second
-    deviation_threshold = 1  # Threshold for standard deviation filtering
+    """Run FramesExtractor from the command line.
 
-    frames_extractor = FramesExtractor(frame_per_second, 600, deviation_threshold)
+    The script expects a single positional argument: the video name (no path, no extension).
+    The file is assumed to be located at `data/raw_videos/<video_name>.mp4`.
+    """
+    parser = argparse.ArgumentParser(description="Extract frames from a raw video in data/raw_videos")
+    parser.add_argument('video_name', nargs='?', default='piano_video_1',
+                        help='video filename without path or extension (default: piano_video_1)')
+    parser.add_argument('--fps', type=int, default=10, help='frames per second to sample')
+    parser.add_argument('--maxframes', type=int, default=600, help='maximum number of frames to consider')
+    parser.add_argument('--deviation', type=float, default=1, help='deviation threshold')
+    parser.add_argument('--show', action='store_true', help='show a sample extracted frame')
+    parser.add_argument('--save', action='store_true', help='save extracted frames to frames/<video_name>/cleaned')
+    args = parser.parse_args()
+
+    video_path = os.path.join('data', 'raw_videos', f"{args.video_name}.mp4")
+
+    frames_extractor = FramesExtractor(args.fps, args.maxframes, args.deviation, show_plots=False, save_frames=args.save)
     extracted_frames = frames_extractor(video_path)
 
     print(len(extracted_frames))
 
-    plt.imshow(extracted_frames[0])
-    plt.show()
+    if args.show and extracted_frames:
+        plt.imshow(extracted_frames[0])
+        plt.show()
 
-    print(f"Extracted {len(extracted_frames)} frames. Frames saved in 'frames' folder.")
+    print(f"Extracted {len(extracted_frames)} frames. Frames saved in 'frames' folder (if --save).")
 
 
 if __name__ == "__main__":
