@@ -1,6 +1,13 @@
 # Python virtual environment
 .venv/
 
+# Local venv created for this project
+# (relative path created by the setup step)
+iacvProject/
+
+# VS Code workspace settings
+.vscode/
+
 # Python cache
 __pycache__/
 *.pyc
