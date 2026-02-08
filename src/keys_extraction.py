@@ -14,10 +14,6 @@ from sklearn.cluster import DBSCAN
 
 from logger import logger
 
-import os
-import cv2
-import numpy as np
-
 def _save_step(name, img):
     os.makedirs("outputs/key_steps", exist_ok=True)
     if img is None:
