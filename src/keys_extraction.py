@@ -6,6 +6,7 @@ import numpy as np
 import os
 from matplotlib import image, pyplot as plt
 import skimage.io
+import json
 import math
 import inspect
 from skimage.feature import match_template
@@ -78,6 +79,31 @@ class BlackKey(Key):
         super().__init__(key_img, y_ul, x_ul, y_dr, x_dr, name)
 
 
+def _key_to_dict(k: Key):
+    y1, x1, y2, x2 = k.coords()
+    return {"y_ul": int(y1), "x_ul": int(x1), "y_dr": int(y2), "x_dr": int(x2), "name": str(k.name)}
+
+def _save_keys_json(keys_dict, out_path):
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    payload = {name: _key_to_dict(k) for name, k in keys_dict.items()}
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+
+def _load_keys_json(json_path, key_cls, key_img):
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    out = {}
+    for name, v in data.items():
+        out[name] = key_cls(
+            key_img,
+            int(v["y_ul"]), int(v["x_ul"]),
+            int(v["y_dr"]), int(v["x_dr"]),
+            str(v.get("name", name))
+        )
+    return out
+
+
 key_names = {
     0: "C",
     1: "D",
@@ -98,6 +124,10 @@ class KeysExtractorThroughLines:
         self.ref_piano = cv2.cvtColor(ref_piano, cv2.COLOR_RGB2GRAY)
         self.logger.info("Keys Extractor created")
         self.debug = True
+        self.cache_white_json = "data/octave/octava_w.json"
+        self.cache_black_json = "data/octave/octava_b.json"
+        self.cache_enabled = True 
+
 
     def rotate_image(self, image, angle):
         image_center = tuple(np.array(image.shape[1::-1]) / 2)
@@ -673,43 +703,53 @@ class KeysExtractorThroughLines:
             # write back (adjust attribute names if different)
             k.x2 = x2_new
 
+        # masked_piano is grayscale ROI with background removed
+        # to_draw_img is rotated full image used for overlays
 
-        # white-only overlay
+        if self.cache_enabled and os.path.exists(self.cache_white_json) and os.path.exists(self.cache_black_json):
+            # Cached mode: JSON is loaded and drawn on full image
+            white_keys_coords = _load_keys_json(self.cache_white_json, WhiteKey, masked_piano)
+            black_keys_coords = _load_keys_json(self.cache_black_json, BlackKey, masked_piano)
+            angle_out = angle
+        else:
+            # Normal mode: detection is performed
+            masked_piano, white_key_w = self._find_white_keys_w(masked_piano)
+            white_key_h = int(0.95 * h)
+
+            white_keys_coords = self._build_white_keys_grid(x, y, w, h, white_key_w, white_key_h, masked_piano)
+            black_key_w = self._find_black_keys_w(masked_piano, x, y, w, h, white_key_h, white_keys_coords)
+            black_keys_coords = self._find_black_keys_coords(masked_piano, black_key_w, white_keys_coords)
+
+            # Save JSON outputs from detector
+            _save_keys_json(white_keys_coords, self.cache_white_json)
+            _save_keys_json(black_keys_coords, self.cache_black_json)
+            angle_out = angle
+
+        # ---- overlays (always produced) ----
         white_vis = deepcopy(to_draw_img)
         if len(white_vis.shape) == 2:
             white_vis = cv2.cvtColor(white_vis, cv2.COLOR_GRAY2RGB)
-
         for k in white_keys_coords.values():
             y1, x1, y2, x2 = k.coords()
             cv2.rectangle(white_vis, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
         _save_step("05_white_keys_only", white_vis)
 
-
-        # find h and w of black keys
-        black_key_w = self._find_black_keys_w(masked_piano, x, y, w, h, white_key_h, white_keys_coords)
-        black_keys_coords = self._find_black_keys_coords(masked_piano, black_key_w, white_keys_coords)
-        
-        # black-only overlay
         black_vis = deepcopy(to_draw_img)
         if len(black_vis.shape) == 2:
             black_vis = cv2.cvtColor(black_vis, cv2.COLOR_GRAY2RGB)
-
         for k in black_keys_coords.values():
             y1, x1, y2, x2 = k.coords()
-            cv2.rectangle(black_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)  # will look red after save_step conversion
-
+            cv2.rectangle(black_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
         _save_step("06_black_keys_only", black_vis)
 
-        # combined overlay
         final_vis = deepcopy(white_vis)
         for k in black_keys_coords.values():
             y1, x1, y2, x2 = k.coords()
             cv2.rectangle(final_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
         _save_step("07_final_white_black", final_vis)
 
-        return white_keys_coords, black_keys_coords, angle
+        return white_keys_coords, black_keys_coords, angle_out
+
 
 
 def main():
