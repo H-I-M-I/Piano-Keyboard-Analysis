@@ -40,6 +40,20 @@ def _save_step(name, img):
 
     cv2.imwrite(f"outputs/key_steps/{name}.png", out)
 
+import json
+import os
+
+def _save_roi_json(x, y, w, h, out_path="outputs/piano_roi.json"):
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    roi = {
+        "x": int(x),
+        "y": int(y),
+        "w": int(w),
+        "h": int(h)
+    }
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(roi, f, indent=2)
+
 
 class Key:
     def __init__(self, key_img, y_ul, x_ul, y_dr, x_dr, name):
@@ -747,6 +761,10 @@ class KeysExtractorThroughLines:
             y1, x1, y2, x2 = k.coords()
             cv2.rectangle(final_vis, (x1, y1), (x2, y2), (0, 0, 255), 2)
         _save_step("07_final_white_black", final_vis)
+
+        x, y, w, h = self._draw_contour(image, c)
+        _save_roi_json(x, y, w, h)
+
 
         return white_keys_coords, black_keys_coords, angle_out
 
