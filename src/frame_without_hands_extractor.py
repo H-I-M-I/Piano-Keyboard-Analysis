@@ -33,7 +33,9 @@ class FrameWithoutHandsExtractor:
         :return: Coordinates of the piano region (x, y, w, h).
         """
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray_frame, 50, 150)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        enhanced = clahe.apply(gray_frame)
+        edges = cv2.Canny(enhanced, 50, 150)
 
         # Find contours
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -82,8 +84,10 @@ class FrameWithoutHandsExtractor:
         if not frames:
             raise ValueError("The frames list is empty.")
 
-        # Get the piano region from the first frame
-        self.piano_region = self.get_piano_region(frames[0])
+        # Use the most informative frame for ROI detection
+        valid_frames = [f for f in frames if f is not None]
+        ref_frame = max(valid_frames, key=lambda f: int(f.max()))
+        self.piano_region = self.get_piano_region(ref_frame)
         x, y, w, h = self.piano_region
 
         # Initialize variables for MSE calculation
@@ -109,7 +113,7 @@ class FrameWithoutHandsExtractor:
 
 def main():
     # Load frames from a directory into a list
-    frames_dir = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned"
+    frames_dir = os.path.join("data", "frames", "piano_video_1", "cleaned")
     frame_paths = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.png')])
     frames = [cv2.imread(frame_path) for frame_path in frame_paths]
 
@@ -121,8 +125,8 @@ def main():
         clear_frame = extractor(frames)
         print(f"Clear piano frame extracted: {clear_frame}")
         os.makedirs("outputs", exist_ok=True)
-        cv2.imwrite("outputs/frame_without_hands.png", clear_frame)
-        print("Saved: outputs/frame_without_hands.png")
+        cv2.imwrite("outputs/frame_without_hands2.png", clear_frame)
+        print("Saved: outputs/frame_without_hands2.png")
 
 
     except ValueError as e:
