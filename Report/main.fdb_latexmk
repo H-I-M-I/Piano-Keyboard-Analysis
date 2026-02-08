@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770568282.18408 0
+["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770582725.56815 0
   "F:/MikTex/bibtex/bst/ieeetran/IEEEtran.bst" 1440622569 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "main.aux" 0 -1 0 "pdflatex"
   "refs.bib" 0 -1 0 ""
@@ -7,7 +7,7 @@
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1770568279.70098 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770568282.18489 0
+["pdflatex"] 1770582721.53791 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770582725.57126 0
   "C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1766785706 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/Himi/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1766785956 13316674 28a3d79445d817c71611f11e9168dfd5 ""
   "F:/MikTex/fonts/enc/dvips/base/8r.enc" 1458473887 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -21,6 +21,14 @@
   "F:/MikTex/fonts/tfm/adobe/times/ptmrc7t.tfm" 1136768654 2680 312a2d12b1f1df8ee0212e7ba1962402 ""
   "F:/MikTex/fonts/tfm/adobe/times/ptmri7t.tfm" 1136768654 2288 f478fc8fed18759effb59f3dad7f3084 ""
   "F:/MikTex/fonts/tfm/adobe/times/ptmri8r.tfm" 1136768654 4640 532ca3305aad10cc01d769f3f91f1029 ""
+  "F:/MikTex/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1233951848 1004 54797486969f23fa377b128694d548df ""
+  "F:/MikTex/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1233951848 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
+  "F:/MikTex/fonts/tfm/public/cm/cmmi6.tfm" 1136765053 1512 f21f83efb36853c0b70002322c1ab3ad ""
+  "F:/MikTex/fonts/tfm/public/cm/cmmi8.tfm" 1136765053 1520 eccf95517727cb11801f4f1aee3a21b4 ""
+  "F:/MikTex/fonts/tfm/public/cm/cmr6.tfm" 1136765053 1300 b62933e007d01cfd073f79b963c01526 ""
+  "F:/MikTex/fonts/tfm/public/cm/cmr8.tfm" 1136765053 1292 21c1c5bfeaebccffdb478fd231a0997d ""
+  "F:/MikTex/fonts/tfm/public/cm/cmsy6.tfm" 1136765053 1116 933a60c408fc0a863a92debe84b2d294 ""
+  "F:/MikTex/fonts/tfm/public/cm/cmsy8.tfm" 1136765053 1120 8b7d695260f3cff42e636090a8002094 ""
   "F:/MikTex/fonts/type1/urw/courier/ucrr8a.pfb" 1136846148 45758 19968a0990191524e34e1994d4a31cb6 ""
   "F:/MikTex/fonts/type1/urw/times/utmb8a.pfb" 1136849748 44729 fea0975e20ec51c992338362f05f1146 ""
   "F:/MikTex/fonts/type1/urw/times/utmr8a.pfb" 1136849748 46026 687528a208fbfc1f00832bb96cccebbb ""
@@ -77,14 +85,14 @@
   "figures/masked_piano.png" 1770180635 133359 22070c4b3eabb2a31b0c11338624203f ""
   "figures/one_frame_fingertips.png" 1770231432 1124123 842a72e7d274c7af66b62c92d03d6706 ""
   "figures/roi_box.png" 1770180635 1065600 5830c580a5f310cef3b3e3717ae0f11f ""
-  "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" 1770480260 763 4e4cce11ec0145eeac399fed3d592095 ""
-  "main.aux" 1770568281 4263 a7de67898dff88bf152dd0b98b8d8a95 "pdflatex"
+  "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" 1770582657 763 4e4cce11ec0145eeac399fed3d592095 ""
+  "main.aux" 1770582723 4676 6c1542e01cd6217077cafc66f71e9ba5 "pdflatex"
   "main.bbl" 0 -1 0 "bibtex main"
-  "main.out" 1770568281 3530 d31a566abeaa3f3aebc116cc51b10993 "pdflatex"
-  "main.tex" 1770480260 763 4e4cce11ec0145eeac399fed3d592095 ""
+  "main.out" 1770582723 3815 a07c0a67c0bf66482d56042976603fc7 "pdflatex"
+  "main.tex" 1770582657 763 4e4cce11ec0145eeac399fed3d592095 ""
   "sections/conclusion.tex" 1770565222 481 4864a7bf58fac40cf900b38172055485 ""
-  "sections/experiments.tex" 1770568275 1452 1c4cfdfeadd4123c31f90d0f6c873410 ""
-  "sections/implementation.tex" 1770568268 3213 054e376a4f6e277c9d3457d16ce80d50 ""
+  "sections/experiments.tex" 1770574730 1444 3dffe38c44c16c27f148f60cdbf07b47 ""
+  "sections/implementation.tex" 1770582715 4311 b3d11c9f18c109be7f0932fd80f2c86c ""
   "sections/method.tex" 1770565107 1704 f8fb98ffc193ef43826be7c63016dea5 ""
   "sections/problem_statement.tex" 1770482879 911 af8516110421af69e0126e03bf023fac ""
   (generated)

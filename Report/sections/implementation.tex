@@ -1,5 +1,42 @@
 \section{Implementation}
 
+\subsection{Pipeline Structure and Intermediate Outputs}
+
+The implementation follows a three-stage pipeline.
+Each stage produces intermediate results
+that are reused by later stages.
+All intermediate outputs are saved to disk
+to allow modular processing and easier debugging. Table~\ref{tab:pipeline_outputs} summarizes the main intermediate outputs
+produced by each stage of the pipeline.
+
+
+\begin{table}[h]
+    \centering
+    \caption{Pipeline stages and saved intermediate outputs}
+    \begin{tabular}{|l|p{5.2cm}|}
+    \hline
+    \textbf{Stage} & \textbf{Saved Outputs} \\
+    \hline
+    Preparation &
+    Hand-free frame, keyboard ROI, masked keyboard image,
+    white and black key coordinates (JSON),
+    key overlay image \\
+    \hline
+    Hand analysis &
+    Tracked fingertip positions,
+    finger landmarks,
+    per-finger press information (CSV) \\
+    \hline
+    Integration &
+    Fingertip-to-key mapping,
+    pressed keys per frame,
+    final visualization video \\
+    \hline
+    \end{tabular}
+    \label{tab:pipeline_outputs}
+\end{table}
+
+
 \subsection{Frame Extraction and Hand-Free Frame Selection}
 
 Input videos are processed frame by frame.
@@ -34,6 +71,8 @@ This simplifies the subsequent key detection process.
     \caption{Masked keyboard image after background removal.}
     \label{fig:mask}
 \end{figure}
+
+
 
 \subsection{White and Black Key Detection}
 
