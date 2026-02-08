@@ -650,10 +650,11 @@ class KeysExtractorThroughLines:
 
         return dict(sorted(black_keys.items(), key=lambda kv: kv[1].coords()[1]))
 
-    def _find_white_keys_w(self, image, yk0, yk1):
+    def _find_white_keys_w(self, image, yk0, yk1, n_white=52):
         """
         image: grayscale ROI (uint8)
-        returns: boundaries (x positions)
+        returns: boundaries (x positions), length n_white+1
+        Robust: grid-first (w/52), peaks only for snapping.
         """
 
         # 1) smooth + boost contrast
@@ -665,53 +666,82 @@ class KeysExtractorThroughLines:
         gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
         gx = np.abs(gx)
 
-        # 3) use only the key area (ignore top border reflections)
+        # 3) use only the key area (lower part of the keyboard band)
         h, w = gx.shape
         band_h = (yk1 - yk0 + 1)
+
         y1 = yk0 + int(0.65 * band_h)
         y2 = yk0 + int(0.98 * band_h)
-        y1 = max(0, min(gx.shape[0] - 1, y1))
-        y2 = max(0, min(gx.shape[0], y2))
+        y1 = max(0, min(h - 1, y1))
+        y2 = max(0, min(h, y2))
         gx_roi = gx[y1:y2, :]
 
-        # 4) vertical projection (sum of vertical edge strength per column)
+        # 4) vertical projection
         proj = gx_roi.sum(axis=0)
-
-        # 5) normalize + smooth 1D signal
         proj = proj / (proj.max() + 1e-9)
         proj = cv2.GaussianBlur(proj.reshape(1, -1), (1, 31), 0).ravel()
 
-        # 6) find peaks with local threshold per chunk
-        peaks = []
-        chunk = max(80, w // 12)
-        for a in range(0, w, chunk):
-            b = min(w, a + chunk)
-            p = proj[a:b]
-            t = 0.35 * (p.max() + 1e-9)
-            for x in range(a + 2, b - 2):
-                if proj[x] > t and proj[x] >= proj[x - 1] and proj[x] >= proj[x + 1]:
-                    peaks.append(x)
+        # ---- expected grid step ----
+        step0 = w / float(n_white)
+        min_dist = int(max(3, 0.5 * step0))
+        snap_r = 0.35 * step0
 
-        peaks = sorted(set(peaks))
-        if len(peaks) < 10:
-            raise ValueError("Too few peaks even with local threshold.")
+        # 5) collect peak candidates (simple local maxima)
+        thr = 0.20 * proj.max()
+        cand = []
+        for x in range(2, w - 2):
+            if proj[x] > thr and proj[x] >= proj[x - 1] and proj[x] >= proj[x + 1]:
+                cand.append(x)
+        cand = np.array(cand, dtype=np.int32)
 
-        # 7) remove near-duplicates
-        filtered = [peaks[0]]
-        for x in peaks[1:]:
-            if x - filtered[-1] >= 4:
-                filtered.append(x)
-        filtered = np.array(filtered)
+        # 6) non-maximum suppression so peaks aren't too dense
+        if cand.size > 0:
+            order = cand[np.argsort(proj[cand])[::-1]]
+            kept = []
+            for x in order:
+                if all(abs(x - k) >= min_dist for k in kept):
+                    kept.append(int(x))
+            kept = np.array(sorted(kept), dtype=np.int32)
+        else:
+            kept = np.array([], dtype=np.int32)
 
-        diffs = np.diff(filtered)
-        med = np.median(diffs)
-        keep = [filtered[0]]
-        for x in filtered[1:]:
-            if x - keep[-1] >= 0.6 * med:
-                keep.append(x)
-        filtered = np.array(keep, dtype=np.int32)
+        # 7) choose best phase offset for the grid (maximize proj on boundaries)
+        offsets = np.linspace(0.0, max(1.0, step0 - 1.0), 25)
+        best_off, best_score = 0.0, -1.0
+        for off in offsets:
+            xs = off + np.arange(0, n_white + 1) * step0
+            xi = np.clip(xs.astype(np.int32), 0, w - 1)
+            score = float(proj[xi].sum())
+            if score > best_score:
+                best_score, best_off = score, off
 
-        return filtered
+        grid = best_off + np.arange(0, n_white + 1) * step0
+
+        # 8) snap each grid boundary to nearest strong peak (if any)
+        out = []
+        for g in grid:
+            if kept.size > 0:
+                near = kept[np.abs(kept - g) <= snap_r]
+            else:
+                near = np.array([], dtype=np.int32)
+
+            if near.size > 0:
+                x = int(near[np.argmax(proj[near])])
+            else:
+                x = int(round(g))
+            out.append(x)
+
+        out = np.array(out, dtype=np.int32)
+        out[0] = 0
+        out[-1] = w - 1
+        out = np.clip(out, 0, w - 1)
+
+        # enforce strictly increasing
+        for i in range(1, len(out)):
+            if out[i] <= out[i - 1]:
+                out[i] = min(w - 1, out[i - 1] + 1)
+
+        return out
 
 
     def _find_orientation(self, image, y, h):
@@ -809,15 +839,17 @@ class KeysExtractorThroughLines:
         _save_step("05_white_keys_only", white_vis)
 
 
+        w_expected = roi_gray.shape[1] / 52.0
+
         if len(boundaries) >= 2:
             diffs = np.diff(boundaries.astype(np.float32))
-            diffs = diffs[diffs > 0]
-            if len(diffs) > 0:
-                white_key_w_grid = float(np.median(diffs))
-            else:
-                white_key_w_grid = roi_gray.shape[1] / 52.0
+            diffs = diffs[diffs > 1]
+            white_key_w_grid = float(np.median(diffs)) if len(diffs) else w_expected
         else:
-            white_key_w_grid = roi_gray.shape[1] / 52.0
+            white_key_w_grid = w_expected
+
+        if white_key_w_grid < 0.6 * w_expected or white_key_w_grid > 1.4 * w_expected:
+            white_key_w_grid = w_expected
         black_keys_coords = self._find_black_keys_by_contours(
             roi_gray, x0, y0, yk0, yk1, white_key_w_grid
         )

@@ -86,13 +86,28 @@ class FrameWithoutHandsExtractor:
 
         # Use the most informative frame for ROI detection
         valid_frames = [f for f in frames if f is not None]
+        if len(valid_frames) > 1:
+            downscale_size = 32
+            features = []
+            for frame in valid_frames:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                small = cv2.resize(gray, (downscale_size, downscale_size), interpolation=cv2.INTER_AREA)
+                features.append(small.astype(np.float32).reshape(-1))
+            stack = np.stack(features, axis=0)
+            mean_vec = np.mean(stack, axis=0)
+            diffs = stack - mean_vec
+            distances = np.sqrt(np.sum(diffs * diffs, axis=1))
+            cutoff = np.percentile(distances, 70)
+            filtered = [valid_frames[i] for i, d in enumerate(distances) if d <= cutoff]
+            if len(filtered) >= 2:
+                valid_frames = filtered
         ref_frame = max(valid_frames, key=lambda f: int(f.max()))
         self.piano_region = self.get_piano_region(ref_frame)
         x, y, w, h = self.piano_region
 
         # Initialize variables for MSE calculation
         previous_frame = None
-        for idx, frame in enumerate(frames):
+        for idx, frame in enumerate(valid_frames):
             piano_frame = frame[y:y + h, x:x + w]
             gray_frame = cv2.cvtColor(piano_frame, cv2.COLOR_BGR2GRAY)
 
