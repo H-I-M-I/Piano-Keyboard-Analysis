@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770582725.56815 0
+["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770584615.52362 0
   "F:/MikTex/bibtex/bst/ieeetran/IEEEtran.bst" 1440622569 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "main.aux" 0 -1 0 "pdflatex"
   "refs.bib" 0 -1 0 ""
@@ -7,7 +7,7 @@
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1770582721.53791 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770582725.57126 0
+["pdflatex"] 1770584612.7417 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770584615.52442 0
   "C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1766785706 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/Himi/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1766785956 13316674 28a3d79445d817c71611f11e9168dfd5 ""
   "F:/MikTex/fonts/enc/dvips/base/8r.enc" 1458473887 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -29,6 +29,8 @@
   "F:/MikTex/fonts/tfm/public/cm/cmr8.tfm" 1136765053 1292 21c1c5bfeaebccffdb478fd231a0997d ""
   "F:/MikTex/fonts/tfm/public/cm/cmsy6.tfm" 1136765053 1116 933a60c408fc0a863a92debe84b2d294 ""
   "F:/MikTex/fonts/tfm/public/cm/cmsy8.tfm" 1136765053 1120 8b7d695260f3cff42e636090a8002094 ""
+  "F:/MikTex/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1247596667 35752 024fb6c41858982481f6968b5fc26508 ""
+  "F:/MikTex/fonts/type1/public/amsfonts/cm/cmsy7.pfb" 1247596666 32716 08e384dc442464e7285e891af9f45947 ""
   "F:/MikTex/fonts/type1/urw/courier/ucrr8a.pfb" 1136846148 45758 19968a0990191524e34e1994d4a31cb6 ""
   "F:/MikTex/fonts/type1/urw/times/utmb8a.pfb" 1136849748 44729 fea0975e20ec51c992338362f05f1146 ""
   "F:/MikTex/fonts/type1/urw/times/utmr8a.pfb" 1136849748 46026 687528a208fbfc1f00832bb96cccebbb ""
@@ -83,17 +85,17 @@
   "figures/PolimiLogo.png" 1761326457 9009 4893d5287f3cc4ab60041ba7e8daf363 ""
   "figures/key_overlay.jpeg" 1770567101 82795 827461db04f15699b153eb3f484f7341 ""
   "figures/masked_piano.png" 1770180635 133359 22070c4b3eabb2a31b0c11338624203f ""
-  "figures/one_frame_fingertips.png" 1770231432 1124123 842a72e7d274c7af66b62c92d03d6706 ""
   "figures/roi_box.png" 1770180635 1065600 5830c580a5f310cef3b3e3717ae0f11f ""
-  "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" 1770582657 763 4e4cce11ec0145eeac399fed3d592095 ""
-  "main.aux" 1770582723 4676 6c1542e01cd6217077cafc66f71e9ba5 "pdflatex"
+  "figures/step2-one-frame-fingertips.png" 1770582017 1124123 842a72e7d274c7af66b62c92d03d6706 ""
+  "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" 1770584363 761 c1b2b2de520d2cd83d7b7a01493a50d0 ""
+  "main.aux" 1770584614 5955 2b52997f1d21bf343bdfcd99d909cfc4 "pdflatex"
   "main.bbl" 0 -1 0 "bibtex main"
-  "main.out" 1770582723 3815 a07c0a67c0bf66482d56042976603fc7 "pdflatex"
-  "main.tex" 1770582657 763 4e4cce11ec0145eeac399fed3d592095 ""
+  "main.out" 1770584614 4771 3fe0d8ea69a1272522e2cc9f629dc640 "pdflatex"
+  "main.tex" 1770584363 761 c1b2b2de520d2cd83d7b7a01493a50d0 ""
   "sections/conclusion.tex" 1770565222 481 4864a7bf58fac40cf900b38172055485 ""
-  "sections/experiments.tex" 1770574730 1444 3dffe38c44c16c27f148f60cdbf07b47 ""
-  "sections/implementation.tex" 1770582715 4311 b3d11c9f18c109be7f0932fd80f2c86c ""
-  "sections/method.tex" 1770565107 1704 f8fb98ffc193ef43826be7c63016dea5 ""
+  "sections/experiments.tex" 1770584530 1208 c7fd6770090845d3bee942a431e5fcd7 ""
+  "sections/implementation.tex" 1770584611 8669 1c1944a8fa464949329a150319dd7238 ""
+  "sections/method.tex" 1770584283 1933 56b02aa18aff07ec4f9a38260337d96f ""
   "sections/problem_statement.tex" 1770482879 911 af8516110421af69e0126e03bf023fac ""
   (generated)
   "main.aux"

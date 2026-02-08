@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.26)  8 FEB 2026 21:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.26)  8 FEB 2026 22:03
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -292,24 +292,24 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 22.
+LaTeX Font Info:    ... okay on input line 22.
 
 -- Lines per column: 56 (exact).
 (F:\MikTex\tex/context/base/mkii\supp-pdf.mkii
@@ -331,58 +331,57 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
  (F:\MikTex\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring OFF on input line 23.
+Package hyperref Info: Link coloring OFF on input line 22.
  (main.out) (main.out)
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-<figures/PolimiLogo.png, id=95, 405.515pt x 125.46875pt>
+<figures/PolimiLogo.png, id=111, 405.515pt x 125.46875pt>
 File: figures/PolimiLogo.png Graphic file (type png)
 <use figures/PolimiLogo.png>
-Package pdftex.def Info: figures/PolimiLogo.png  used on input line 26.
+Package pdftex.def Info: figures/PolimiLogo.png  used on input line 25.
 (pdftex.def)             Requested size: 154.80157pt x 47.89687pt.
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 26.
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 25.
  (F:\MikTex\tex/latex/psnfss\ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
 File: figures/PolimiLogo.png Graphic file (type png)
 <use figures/PolimiLogo.png>
-Package pdftex.def Info: figures/PolimiLogo.png  used on input line 26.
+Package pdftex.def Info: figures/PolimiLogo.png  used on input line 25.
 (pdftex.def)             Requested size: 154.80157pt x 47.89687pt.
 File: figures/PolimiLogo.png Graphic file (type png)
 <use figures/PolimiLogo.png>
-Package pdftex.def Info: figures/PolimiLogo.png  used on input line 26.
+Package pdftex.def Info: figures/PolimiLogo.png  used on input line 25.
 (pdftex.def)             Requested size: 154.80157pt x 47.89687pt.
  (sections/problem_statement.tex) (sections/method.tex) (sections/implementation.tex
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figures/roi_box.png, id=97, 1284.8pt x 722.7pt>
-File: figures/roi_box.png Graphic file (type png)
-<use figures/roi_box.png>
-Package pdftex.def Info: figures/roi_box.png  used on input line 58.
-(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
 [1{C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{F:/MikTex/fonts/enc/dvips/base/8r.enc}
 
 
  <./figures/PolimiLogo.png>]
-<figures/masked_piano.png, id=109, 1284.8pt x 722.7pt>
+<figures/roi_box.png, id=124, 1284.8pt x 722.7pt>
+File: figures/roi_box.png Graphic file (type png)
+<use figures/roi_box.png>
+Package pdftex.def Info: figures/roi_box.png  used on input line 58.
+(pdftex.def)             Requested size: 214.20154pt x 120.48645pt.
+<figures/masked_piano.png, id=125, 1284.8pt x 722.7pt>
 File: figures/masked_piano.png Graphic file (type png)
 <use figures/masked_piano.png>
 Package pdftex.def Info: figures/masked_piano.png  used on input line 70.
-(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
-<figures/key_overlay.jpeg, id=110, 763.85374pt x 429.605pt>
+(pdftex.def)             Requested size: 214.20154pt x 120.48645pt.
+<figures/key_overlay.jpeg, id=126, 763.85374pt x 429.605pt>
 File: figures/key_overlay.jpeg Graphic file (type jpg)
 <use figures/key_overlay.jpeg>
-Package pdftex.def Info: figures/key_overlay.jpeg  used on input line 105.
-(pdftex.def)             Requested size: 201.60077pt x 113.37935pt.
-) (sections/experiments.tex [2 <./figures/roi_box.png (PNG copy)> <./figures/masked_piano.png (PNG copy)> <./figures/key_overlay.jpeg>]
-<figures/one_frame_fingertips.png, id=118, 1284.8pt x 722.7pt>
-File: figures/one_frame_fingertips.png Graphic file (type png)
-<use figures/one_frame_fingertips.png>
-Package pdftex.def Info: figures/one_frame_fingertips.png  used on input line 34.
-(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
-) (sections/conclusion.tex)
+Package pdftex.def Info: figures/key_overlay.jpeg  used on input line 104.
+(pdftex.def)             Requested size: 214.20154pt x 120.46556pt.
+<figures/step2-one-frame-fingertips.png, id=127, 1284.8pt x 722.7pt>
+File: figures/step2-one-frame-fingertips.png Graphic file (type png)
+<use figures/step2-one-frame-fingertips.png>
+Package pdftex.def Info: figures/step2-one-frame-fingertips.png  used on input line 150.
+(pdftex.def)             Requested size: 214.20154pt x 120.48645pt.
+ [2 <./figures/roi_box.png (PNG copy)> <./figures/masked_piano.png (PNG copy)> <./figures/key_overlay.jpeg>]) (sections/experiments.tex) (sections/conclusion.tex)
 No file main.bbl.
 
 ** Conference Paper **
@@ -395,28 +394,26 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[3
-
- <./figures/one_frame_fingertips.png (PNG copy)>] (main.aux)
+[3 <./figures/step2-one-frame-fingertips.png (PNG copy)>] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-11-06>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: A07C0A67C0BF66482D56042976603FC7;3815.
+(rerunfilecheck)             Checksum: 3FE0D8EA69A1272522E2CC9F629DC640;4771.
  ) 
 Here is how much of TeX's memory you used:
- 10085 strings out of 467871
- 158363 string characters out of 5435213
- 589383 words of memory out of 5000000
- 38820 multiletter control sequences out of 15000+600000
- 660760 words of font info for 100 fonts, out of 8000000 for 9000
+ 10110 strings out of 467871
+ 158887 string characters out of 5435213
+ 589774 words of memory out of 5000000
+ 38834 multiletter control sequences out of 15000+600000
+ 660987 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,480b,471s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<F:/MikTex/fonts/type1/urw/courier/ucrr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmb8a.pfb><F:/MikTex/fonts/type1/urw/times/utmr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (3 pages, 2488635 bytes).
+ 75i,10n,79p,764b,444s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<F:/MikTex/fonts/type1/public/amsfonts/cm/cmr10.pfb><F:/MikTex/fonts/type1/public/amsfonts/cm/cmsy7.pfb><F:/MikTex/fonts/type1/urw/courier/ucrr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmb8a.pfb><F:/MikTex/fonts/type1/urw/times/utmr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmri8a.pfb>
+Output written on main.pdf (3 pages, 2515116 bytes).
 PDF statistics:
- 151 PDF objects out of 1000 (max. 8388607)
- 32 named destinations out of 1000 (max. 500000)
- 210 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 189 PDF objects out of 1000 (max. 8388607)
+ 43 named destinations out of 1000 (max. 500000)
+ 242 words of extra memory for PDF output out of 10000 (max. 10000000)
 
