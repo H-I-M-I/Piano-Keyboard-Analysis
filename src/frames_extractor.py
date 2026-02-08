@@ -4,7 +4,7 @@ import os
 import argparse
 import matplotlib.pyplot as plt
 
-from logger import logger
+from src.logger import logger
 
 
 def calculate_mse(frame1, frame2):

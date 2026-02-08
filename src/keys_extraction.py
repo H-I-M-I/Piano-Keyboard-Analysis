@@ -11,7 +11,7 @@ import inspect
 from skimage.feature import match_template
 from sklearn.cluster import DBSCAN
 
-from logger import logger
+from src.logger import logger
 
 import os
 import cv2
