@@ -1,17 +1,48 @@
 \section{Method}
 
 \subsection{Overall Pipeline}
-% overview text
 
-\subsection{Frame Selection and Preprocessing}
-% (frames, ROI, hand-free frame)
+The proposed pipeline processes the input video frame by frame.
+First, representative frames are selected from the video.
+Then, the piano keyboard is localized and isolated.
+White and black keys are detected on the keyboard region.
+Fingertips are detected on the full image.
+Finally, fingertip positions are associated with keys
+to identify pressed keys at each time instant.
+
+\subsection{Frame Selection}
+
+From each input video, a subset of frames is extracted.
+Frames with minimal hand occlusion are selected.
+These frames are used for keyboard and key detection.
+
+\subsection{Keyboard Localization}
+
+The piano keyboard is localized in the selected frames.
+The keyboard region is isolated from the background
+to simplify further processing.
 
 \subsection{Piano Key Detection}
-% (keys detection idea)
+
+White and black piano keys are detected inside the keyboard region.
+White keys are detected first to define the keyboard structure.
+Black keys are detected relative to the white key layout.
 
 \subsection{Fingertip Detection}
 
-\subsection{Fingertip-to-Key Association}
+Fingertips are detected on the full image.
+Detection is performed independently from key detection.
+This ensures that fingertip positions remain consistent
+with the original image coordinates.
+
+\subsection{Key-Finger Association}
+
+Detected fingertip positions are compared with key locations.
+A fingertip is assigned to a key if it lies inside the key region.
+Temporal consistency is used to reduce false detections.
 
 \subsection{Pressed-Key Detection}
 
+A key is considered pressed when a fingertip remains
+inside its region for a short temporal window.
+This allows key presses to be detected over time.

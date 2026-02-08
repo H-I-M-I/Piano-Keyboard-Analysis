@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.26)  7 FEB 2026 17:48
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.26)  8 FEB 2026 17:31
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -336,7 +336,7 @@ Package hyperref Info: Link coloring OFF on input line 23.
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-<figures/PolimiLogo.png, id=75, 405.515pt x 125.46875pt>
+<figures/PolimiLogo.png, id=91, 405.515pt x 125.46875pt>
 File: figures/PolimiLogo.png Graphic file (type png)
 <use figures/PolimiLogo.png>
 Package pdftex.def Info: figures/PolimiLogo.png  used on input line 26.
@@ -353,7 +353,33 @@ File: figures/PolimiLogo.png Graphic file (type png)
 <use figures/PolimiLogo.png>
 Package pdftex.def Info: figures/PolimiLogo.png  used on input line 26.
 (pdftex.def)             Requested size: 154.80157pt x 47.89687pt.
- (sections/problem_statement.tex) (sections/method.tex) (sections/implementation.tex) (sections/experiments.tex) (sections/conclusion.tex)
+ (sections/problem_statement.tex) (sections/method.tex) (sections/implementation.tex
+<figures/roi_box.png, id=92, 1284.8pt x 722.7pt>
+File: figures/roi_box.png Graphic file (type png)
+<use figures/roi_box.png>
+Package pdftex.def Info: figures/roi_box.png  used on input line 21.
+(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
+<figures/masked_piano.png, id=93, 1284.8pt x 722.7pt>
+File: figures/masked_piano.png Graphic file (type png)
+<use figures/masked_piano.png>
+Package pdftex.def Info: figures/masked_piano.png  used on input line 33.
+(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
+ [1{C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{F:/MikTex/fonts/enc/dvips/base/8r.enc}
+
+
+ <./figures/PolimiLogo.png>]
+<figures/key_overlay.jpeg, id=104, 763.85374pt x 429.605pt>
+File: figures/key_overlay.jpeg Graphic file (type jpg)
+<use figures/key_overlay.jpeg>
+Package pdftex.def Info: figures/key_overlay.jpeg  used on input line 66.
+(pdftex.def)             Requested size: 201.60077pt x 113.37935pt.
+) (sections/experiments.tex
+<figures/one_frame_fingertips.png, id=105, 1284.8pt x 722.7pt>
+File: figures/one_frame_fingertips.png Graphic file (type png)
+<use figures/one_frame_fingertips.png>
+Package pdftex.def Info: figures/one_frame_fingertips.png  used on input line 35.
+(pdftex.def)             Requested size: 201.60077pt x 113.39577pt.
+) (sections/conclusion.tex [2 <./figures/roi_box.png (PNG copy)> <./figures/masked_piano.png (PNG copy)> <./figures/key_overlay.jpeg> <./figures/one_frame_fingertips.png (PNG copy)>])
 No file main.bbl.
 
 ** Conference Paper **
@@ -366,30 +392,28 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[1{C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{F:/MikTex/fonts/enc/dvips/base/8r.enc}
+[3
 
-
-
- <./figures/PolimiLogo.png>] (main.aux)
+] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-11-06>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C8FB2BC82E85E1782F3E02F1ECE3F8D8;3044.
+(rerunfilecheck)             Checksum: D31A566ABEAA3F3AEBC116CC51B10993;3530.
  ) 
 Here is how much of TeX's memory you used:
- 10008 strings out of 467871
- 156856 string characters out of 5435213
- 580976 words of memory out of 5000000
- 38765 multiletter control sequences out of 15000+600000
+ 10057 strings out of 467871
+ 158004 string characters out of 5435213
+ 588317 words of memory out of 5000000
+ 38804 multiletter control sequences out of 15000+600000
  655429 words of font info for 88 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,8n,79p,432b,442s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,8n,79p,480b,445s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <F:/MikTex/fonts/type1/urw/courier/ucrr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmb8a.pfb><F:/MikTex/fonts/type1/urw/times/utmr8a.pfb><F:/MikTex/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (1 page, 72728 bytes).
+Output written on main.pdf (3 pages, 2485913 bytes).
 PDF statistics:
- 111 PDF objects out of 1000 (max. 8388607)
- 20 named destinations out of 1000 (max. 500000)
- 150 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 144 PDF objects out of 1000 (max. 8388607)
+ 30 named destinations out of 1000 (max. 500000)
+ 202 words of extra memory for PDF output out of 10000 (max. 10000000)
 

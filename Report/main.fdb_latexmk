@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770482886.54117 0
+["bibtex main"] 0 "main.aux" "main.bbl" "main" 1770568282.18408 0
   "F:/MikTex/bibtex/bst/ieeetran/IEEEtran.bst" 1440622569 57748 7c8250ecf02814ce6ddc0cdbb63df1dd ""
   "main.aux" 0 -1 0 "pdflatex"
   "refs.bib" 0 -1 0 ""
@@ -7,7 +7,7 @@
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1770482881.44771 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770482886.54347 0
+["pdflatex"] 1770568279.70098 "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" "main.pdf" "main" 1770568282.18489 0
   "C:/Users/Himi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1766785706 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/Himi/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1766785956 13316674 28a3d79445d817c71611f11e9168dfd5 ""
   "F:/MikTex/fonts/enc/dvips/base/8r.enc" 1458473887 4993 80dc9bab7f31fb78a000ccfed0e27cab ""
@@ -73,15 +73,19 @@
   "F:/MikTex/tex/latex/rerunfilecheck/rerunfilecheck.sty" 1751104012 9684 a33a14b82ce60d6e77cb9be689d79ee6 ""
   "F:/MikTex/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "figures/PolimiLogo.png" 1761326457 9009 4893d5287f3cc4ab60041ba7e8daf363 ""
+  "figures/key_overlay.jpeg" 1770567101 82795 827461db04f15699b153eb3f484f7341 ""
+  "figures/masked_piano.png" 1770180635 133359 22070c4b3eabb2a31b0c11338624203f ""
+  "figures/one_frame_fingertips.png" 1770231432 1124123 842a72e7d274c7af66b62c92d03d6706 ""
+  "figures/roi_box.png" 1770180635 1065600 5830c580a5f310cef3b3e3717ae0f11f ""
   "g:/POLIMI_ACADEMICS/First_Year/1st_Semester/099993_Image_Analysis_&_Computer_Vision/Projects_&_Homeworks/Project/IACV-Project/Report/main.tex" 1770480260 763 4e4cce11ec0145eeac399fed3d592095 ""
-  "main.aux" 1770482884 2626 2a38dd146676e068e36425bb900db65c "pdflatex"
+  "main.aux" 1770568281 4263 a7de67898dff88bf152dd0b98b8d8a95 "pdflatex"
   "main.bbl" 0 -1 0 "bibtex main"
-  "main.out" 1770482884 3044 c8fb2bc82e85e1782f3e02f1ece3f8d8 "pdflatex"
+  "main.out" 1770568281 3530 d31a566abeaa3f3aebc116cc51b10993 "pdflatex"
   "main.tex" 1770480260 763 4e4cce11ec0145eeac399fed3d592095 ""
-  "sections/conclusion.tex" 1770437908 0 d41d8cd98f00b204e9800998ecf8427e ""
-  "sections/experiments.tex" 1770477736 181 a471230d939316833b135c3a87b0de0e ""
-  "sections/implementation.tex" 1770476536 402 8b1df63be1a8d54f2b5ab22793ec0d7e ""
-  "sections/method.tex" 1770476444 334 0cefcd8e50d272199f586dc19afc626a ""
+  "sections/conclusion.tex" 1770565222 481 4864a7bf58fac40cf900b38172055485 ""
+  "sections/experiments.tex" 1770568275 1452 1c4cfdfeadd4123c31f90d0f6c873410 ""
+  "sections/implementation.tex" 1770568268 3213 054e376a4f6e277c9d3457d16ce80d50 ""
+  "sections/method.tex" 1770565107 1704 f8fb98ffc193ef43826be7c63016dea5 ""
   "sections/problem_statement.tex" 1770482879 911 af8516110421af69e0126e03bf023fac ""
   (generated)
   "main.aux"

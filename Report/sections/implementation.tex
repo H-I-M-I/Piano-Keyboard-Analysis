@@ -1,13 +1,94 @@
 \section{Implementation}
 
-\subsection{Frame Extraction and ROI Localization}
-% Person A: tools, parameters, decisions
+\subsection{Frame Extraction and Hand-Free Frame Selection}
 
-\subsection{White and Black Key Localization}
-% cropped image, JSON output, coordinate remapping
+Input videos are processed frame by frame.
+Frames are sampled at a fixed rate.
+Among the sampled frames,
+a frame with minimal hand occlusion is selected manually.
+This frame is used for keyboard and key detection.
 
-\subsection{Fingertip Detection}
-% Person B: model / method / thresholds
+\subsection{Keyboard Region Localization and Masking}
 
-\subsection{Key Mapping and Pressed-Key Logic}
-% Person C: point-in-box logic, temporal smoothing
+The piano keyboard region is localized
+using contour-based analysis.
+A bounding box is estimated
+to isolate the keyboard from the background.
+This bounding box defines the region of interest (ROI).
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/roi_box.png}
+    \caption{Estimated keyboard region of interest (ROI) obtained from the hand-free frame.}
+    \label{fig:roi}
+\end{figure}
+
+A binary mask is applied to the ROI.
+Only pixels belonging to the keyboard are preserved.
+Background regions are removed.
+This simplifies the subsequent key detection process.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/masked_piano.png}
+    \caption{Masked keyboard image after background removal.}
+    \label{fig:mask}
+\end{figure}
+
+\subsection{White and Black Key Detection}
+
+Key detection is performed on the masked and cropped keyboard image.
+White keys are detected first.
+Vertical intensity transitions are analyzed
+to locate borders between adjacent white keys.
+The median distance between detected borders
+is used to estimate the average white key width.
+
+Using this width,
+a regular grid of white key bounding boxes is generated.
+The height of white keys is estimated
+from the keyboard region dimensions
+and kept constant across the keyboard.
+
+Black keys are detected relative to the white key layout.
+Only valid musical positions are considered.
+Detection is restricted to the upper portion of the white keys,
+where black keys are expected to appear.
+
+All detected key coordinates
+are initially expressed in the cropped image reference frame.
+They are then mapped back to the full image reference frame
+using the known ROI position and scale.
+The final key locations are stored as JSON files.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.8\linewidth]{figures/key_overlay.jpeg}
+    \caption{Detected white and black piano keys overlaid on the full image.}
+    \label{fig:keys}
+\end{figure}
+
+\subsection{Fingertip Detection and Tracking}
+
+Fingertips are detected on all video frames.
+Detection is performed on the full image.
+Temporal tracking and filtering are applied
+to reduce unstable detections.
+Tracked fingertip positions are saved
+for later processing.
+
+\subsection{Key-Finger Mapping}
+
+For each frame, fingertip positions were compared
+with detected key bounding boxes.
+A fingertip was assigned to a key
+if it was located inside the corresponding key region.
+Multiple fingertip detections were handled independently.
+
+\subsection{Pressed-Key Detection}
+
+Key press events were detected over time.
+A key was considered pressed when a fingertip
+remained inside its region across consecutive frames.
+Short temporal smoothing was applied
+to reduce spurious detections.
