@@ -544,6 +544,31 @@ class KeysExtractorThroughLines:
             bw[:, a:b] = (img_u8[:, a:b] < t).astype(np.uint8) * 255
         return bw
 
+    def _tighten_black_bbox(self, gray_strip, x, y, w, h, pct=45, col_occ=0.25):
+        patch = gray_strip[y:y + h, x:x + w]
+        if patch.size == 0:
+            return x, w
+
+        t = np.percentile(patch, pct)
+        m = (patch < t).astype(np.uint8)
+
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+
+        col = m.mean(axis=0)
+        cols = np.where(col > col_occ)[0]
+        if cols.size < 3:
+            return x, w
+
+        left = int(cols[0])
+        right = int(cols[-1])
+
+        left = max(0, left - 1)
+        right = min(w - 1, right + 1)
+
+        x_new = x + left
+        w_new = (right - left + 1)
+        return x_new, w_new
+
     def _find_black_keys_by_contours(self, roi_gray, x_off, y_off, yk0, yk1, white_key_w):
         key_h = yk1 - yk0 + 1
 
@@ -576,6 +601,8 @@ class KeysExtractorThroughLines:
         min_h = 0.25 * key_h
         max_h = 0.95 * key_h
 
+        raw_widths = []
+        tmp_rects = []
         for c in cnts:
             x, y, ww, hh = cv2.boundingRect(c)
 
@@ -588,6 +615,12 @@ class KeysExtractorThroughLines:
             if aspect < 1.2:
                 continue
 
+            raw_widths.append(ww)
+            tmp_rects.append((x, y, ww, hh))
+
+        w_med = float(np.median(raw_widths)) if len(raw_widths) else expected_w
+
+        for x, y, ww, hh in tmp_rects:
             if ww <= max_w:
                 segs = [(0, ww)]
             else:
@@ -595,18 +628,22 @@ class KeysExtractorThroughLines:
                 segs = self._split_wide_blob(bw_crop, expected_w, min_w, max_w)
 
             for a, b in segs:
+                xx = x + a
                 wseg = b - a
                 if wseg < min_w or wseg > 2.0 * max_w:
                     continue
 
+                if wseg > 1.30 * w_med:
+                    xx, wseg = self._tighten_black_bbox(strip_eq, xx, y, wseg, hh)
+
                 name = f"BK_{idx}"
-                x_abs1 = x_off + (x + a)
-                x_abs2 = x_off + (x + b)
+                x_abs1 = x_off + xx
+                x_abs2 = x_off + xx + wseg
                 y_abs1 = y_off + y_strip0 + y
                 y_abs2 = y_off + y_strip0 + y + hh
 
                 black_keys[name] = BlackKey(
-                    roi_gray[(y_strip0 + y):(y_strip0 + y + hh), (x + a):(x + b)],
+                    roi_gray[(y_strip0 + y):(y_strip0 + y + hh), xx:(xx + wseg)],
                     y_abs1, x_abs1, y_abs2, x_abs2, name
                 )
                 idx += 1
