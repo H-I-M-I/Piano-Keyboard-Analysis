@@ -43,6 +43,4 @@ Temporal consistency is used to reduce false detections.
 
 \subsection{Pressed-Key Detection}
 
-A key is considered pressed when a fingertip remains
-inside its region for a short temporal window.
-This allows key presses to be detected over time.
+The pressed keys are determined through the combination of spatial and motion-based information. First, the spatial information of the position of the fingertips is mapped to the identified key regions. A key is said to be pressed if the fingertip is spatially associated with the key and the finger corresponding to the key is identified as pressed through articulation analysis.
