@@ -14,6 +14,10 @@ from sklearn.cluster import DBSCAN
 
 from logger import logger
 
+import os
+import cv2
+import numpy as np
+
 def _save_step(name, img):
     os.makedirs("outputs/key_steps", exist_ok=True)
     if img is None:
@@ -129,7 +133,7 @@ class KeysExtractorThroughLines:
     def __init__(self):
         self.logger = logger
 
-        ref_piano_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\octave\\octava.png"
+        ref_piano_path = os.path.join("data", "octave", "octava.png")
         ref_piano = skimage.io.imread(ref_piano_path)
         self.ref_piano = cv2.cvtColor(ref_piano, cv2.COLOR_RGB2GRAY)
         self.logger.info("Keys Extractor created")
@@ -276,47 +280,60 @@ class KeysExtractorThroughLines:
         )
 
 
-    def _build_white_keys_grid(self, x, y, w, h, white_key_w, white_key_h, masked_piano):
-        """
-        Stable white keys are generated as a uniform grid.
-        This avoids border noise problems.
-        Coordinates are in FULL IMAGE system (x,y are ROI offsets).
-        """
+    def _build_white_keys_from_boundaries(self, roi_gray, x_off, y_off, yk0, yk1, boundaries, n_white=52):
+        h, w = roi_gray.shape
+        y1 = max(0, int(yk0))
+        y2 = min(h - 1, int(yk1))
 
-        # safety
-        white_key_w = int(max(6, round(float(white_key_w))))
-        white_key_h = int(max(20, round(float(white_key_h))))
+        b = np.clip(np.asarray(boundaries, dtype=np.int32), 0, w - 1)
+        b = np.unique(np.sort(b))
 
-        # limits inside ROI
-        x_start = int(x + 2)
-        x_end = int(x + w - 2)
+        if len(b) >= 2:
+            diffs = np.diff(b).astype(np.float32)
+            diffs = diffs[(diffs > 4) & (diffs < 200)]
+            if len(diffs) > 0:
+                step = float(np.median(diffs))
+            else:
+                step = w / float(n_white)
+        else:
+            step = w / float(n_white)
 
-        # clamp height inside image
-        img_h = masked_piano.shape[0]
-        y1 = int(max(0, y))
-        y2 = int(min(img_h - 1, y + white_key_h))
+        out = []
+        if len(b) > 0 and b[0] > 0.6 * step:
+            out.append(0)
+        elif len(b) > 0:
+            out.append(int(b[0]))
+        else:
+            out.append(0)
+
+        cur = out[0]
+        for _ in range(n_white):
+            target = cur + step
+            cand = b[(b > cur + 0.3 * step) & (b < cur + 1.7 * step)]
+            if len(cand) > 0:
+                nxt = int(cand[np.argmin(np.abs(cand - target))])
+            else:
+                nxt = int(round(target))
+            out.append(nxt)
+            cur = nxt
+
+        b = np.clip(np.array(out, dtype=np.int32), 0, w - 1)
+        for i in range(1, len(b)):
+            if b[i] <= b[i - 1]:
+                b[i] = min(w - 1, b[i - 1] + 1)
 
         white_keys = {}
-        notes = ["C","D","E","F","G","A","B"]
-
-        xi = x_start
-        idx = 0
-
-        while xi + white_key_w < x_end:
-            name = f"{notes[idx % 7]}_{idx}"
-
-            k = WhiteKey(
-                masked_piano,
-                int(y1), int(xi),
-                int(y2), int(xi + white_key_w),
+        for i in range(len(b) - 1):
+            x1, x2 = int(b[i]), int(b[i + 1])
+            if x2 <= x1 + 2:
+                continue
+            name = f"W_{i}"
+            white_keys[name] = WhiteKey(
+                roi_gray[y1:y2, x1:x2],
+                int(y_off + y1), int(x_off + x1),
+                int(y_off + y2), int(x_off + x2),
                 name
             )
-
-            white_keys[name] = k
-
-            xi += white_key_w
-            idx += 1
-
 
         return white_keys
 
@@ -478,145 +495,297 @@ class KeysExtractorThroughLines:
 
         return keys_dict, h_keys
 
-    def _find_black_keys_w(self, masked_piano, x, y, w, h, white_key_h, white_keys_coords):
-        patch = masked_piano[y:y + h, x:x + w, ...]
-        patch = cv2.adaptiveThreshold(patch, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                      cv2.THRESH_BINARY, 199, 5)
+    def _keyboard_band_from_vertical_edges(self, roi_gray):
+        gx = cv2.Sobel(roi_gray, cv2.CV_32F, 1, 0, ksize=3)
+        gx = np.abs(gx)
 
-        # use first white key as reference instead of named key
-        first_key = list(white_keys_coords.values())[0]
-        black_key_y = int(first_key.coords()[0] - y + white_key_h / 3)
+        row_energy = gx.mean(axis=1)
+        row_energy = cv2.GaussianBlur(row_energy.reshape(-1, 1), (1, 31), 0).ravel()
 
-        black_w_list = []
+        thr = 0.35 * row_energy.max()
+        idx = np.where(row_energy > thr)[0]
+        if len(idx) < 10:
+            h = roi_gray.shape[0]
+            return int(0.25 * h), int(0.80 * h)
 
-        cur_len = 0
-        for j in range(w):
-            if patch[black_key_y, j] == 0:
-                cur_len += 1
+        starts = [idx[0]]
+        ends = []
+        for i in range(1, len(idx)):
+            if idx[i] != idx[i - 1] + 1:
+                ends.append(idx[i - 1])
+                starts.append(idx[i])
+        ends.append(idx[-1])
+
+        lengths = [e - s for s, e in zip(starts, ends)]
+        k = int(np.argmax(lengths))
+        y0, y1 = int(starts[k]), int(ends[k])
+
+        pad = int(0.05 * (y1 - y0 + 1))
+        y0 = max(0, y0 - pad)
+        y1 = min(roi_gray.shape[0] - 1, y1 + pad)
+        return y0, y1
+
+    def _split_wide_blob(self, bw_crop, expected_w, min_w, max_w):
+        col = bw_crop.mean(axis=0).astype(np.float32)
+        col = cv2.GaussianBlur(col.reshape(1, -1), (1, 21), 0).ravel()
+
+        thr = 0.35 * col.max()
+        m = col > thr
+
+        runs = []
+        i = 0
+        n = len(m)
+        while i < n:
+            if not m[i]:
+                i += 1
+                continue
+            j = i + 1
+            while j < n and m[j]:
+                j += 1
+            runs.append((i, j))
+            i = j
+
+        segs = [(a, b) for (a, b) in runs if (b - a) >= 0.6 * min_w]
+
+        if len(segs) <= 1:
+            w = bw_crop.shape[1]
+            k = max(1, int(round(w / (expected_w + 1e-9))))
+            if k == 1:
+                return [(0, w)]
+            step = w / float(k)
+            out = []
+            for t in range(k):
+                a = int(round(t * step))
+                b = int(round((t + 1) * step))
+                if b - a >= 0.6 * min_w:
+                    out.append((a, b))
+            return out
+
+        out = []
+        for a, b in segs:
+            w = b - a
+            if w <= 1.5 * max_w:
+                out.append((a, b))
             else:
-                if cur_len > 0:
-                    black_w_list.append(cur_len)
-                cur_len = 0
+                k = max(1, int(round(w / (expected_w + 1e-9))))
+                step = w / float(k)
+                for t in range(k):
+                    aa = int(round(a + t * step))
+                    bb = int(round(a + (t + 1) * step))
+                    if bb - aa >= 0.6 * min_w:
+                        out.append((aa, bb))
+        return out
 
-        black_w = np.median(black_w_list)
+    def _local_percentile_bw(self, img_u8, pct=40, chunk=None):
+        h, w = img_u8.shape
+        if chunk is None:
+            chunk = max(120, w // 10)
 
-        return black_w
+        bw = np.zeros_like(img_u8, dtype=np.uint8)
+        for a in range(0, w, chunk):
+            b = min(w, a + chunk)
+            t = np.percentile(img_u8[:, a:b], pct)
+            bw[:, a:b] = (img_u8[:, a:b] < t).astype(np.uint8) * 255
+        return bw
 
-    def _find_black_keys_coords(self, masked_piano, black_w, white_keys_coords):
+    def _tighten_black_bbox(self, gray_strip, x, y, w, h, pct=45, col_occ=0.25):
+        patch = gray_strip[y:y + h, x:x + w]
+        if patch.size == 0:
+            return x, w
 
-        # using the info about the location of black keys (between white),
-        # derive their coordinates
+        t = np.percentile(patch, pct)
+        m = (patch < t).astype(np.uint8)
 
-        white_keys = list(white_keys_coords.keys())
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+
+        col = m.mean(axis=0)
+        cols = np.where(col > col_occ)[0]
+        if cols.size < 3:
+            return x, w
+
+        left = int(cols[0])
+        right = int(cols[-1])
+
+        left = max(0, left - 1)
+        right = min(w - 1, right + 1)
+
+        x_new = x + left
+        w_new = (right - left + 1)
+        return x_new, w_new
+
+    def _find_black_keys_by_contours(self, roi_gray, x_off, y_off, yk0, yk1, white_key_w):
+        key_h = yk1 - yk0 + 1
+
+        y_strip0 = yk0 + int(0.05 * key_h)
+        y_strip1 = yk0 + int(0.65 * key_h)
+        strip = roi_gray[y_strip0:y_strip1, :]
+
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        strip_eq = clahe.apply(strip)
+
+        bw = self._local_percentile_bw(strip_eq, pct=40, chunk=max(120, strip_eq.shape[1] // 10))
+
+        hline = cv2.morphologyEx(bw, cv2.MORPH_OPEN, np.ones((1, 41), np.uint8), iterations=1)
+        bw = cv2.subtract(bw, hline)
+
+        bw = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, np.ones((11, 3), np.uint8), iterations=1)
+        bw = cv2.morphologyEx(bw, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+
+        _save_step("06b_black_bw", bw)
+
+        cnts, _ = cv2.findContours(bw, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
         black_keys = {}
-        white_keys.sort(key=lambda x: 100 * int(x[-1]) + "CDEFGAB".index(x[0]))
+        idx = 0
 
-        masked_piano[masked_piano > 150] = 255
-        masked_piano[masked_piano < 150] = 0
+        expected_w = 0.60 * white_key_w
+        min_w = 0.28 * white_key_w
+        max_w = 1.30 * white_key_w
 
-        for key_name in white_keys:
-            white_key = white_keys_coords[key_name]
+        min_h = 0.25 * key_h
+        max_h = 0.95 * key_h
 
-            if white_key.black_is_next:
-                name_cur = white_key.name
-                name_cur = name_cur[0] + "#" + name_cur[1:]
+        raw_widths = []
+        tmp_rects = []
+        for c in cnts:
+            x, y, ww, hh = cv2.boundingRect(c)
 
-                y_ul, _, y_dr, x_dr = white_key.coords()
-                y_ul_b = y_ul
-                x_ul_b = int(x_dr - black_w // 2)
+            if hh < min_h or hh > max_h:
+                continue
+            if ww < min_w:
+                continue
 
-                x_dr_b = int(x_ul_b + black_w)
-                x_mean_b = int((x_dr_b + x_ul_b) / 2)
+            aspect = hh / (ww + 1e-9)
+            if aspect < 1.2:
+                continue
 
-                y_dr_b = 0
-                for i in range(int((y_dr - y_ul) / 3), y_dr - y_ul):
+            raw_widths.append(ww)
+            tmp_rects.append((x, y, ww, hh))
 
-                    if abs(np.mean(masked_piano[y_ul + i, x_mean_b - 2:x_mean_b + 2]) - np.mean(
-                            masked_piano[y_ul + i + 1, x_mean_b - 2:x_mean_b + 2])) > 20:
-                        y_dr_b = y_ul + i
-                        break
+        w_med = float(np.median(raw_widths)) if len(raw_widths) else expected_w
 
-                max_dif = 15
+        for x, y, ww, hh in tmp_rects:
+            if ww <= max_w:
+                segs = [(0, ww)]
+            else:
+                bw_crop = bw[y:y + hh, x:x + ww]
+                segs = self._split_wide_blob(bw_crop, expected_w, min_w, max_w)
 
-                for i in range(-int(black_w / 4), int(black_w / 4)):
+            for a, b in segs:
+                xx = x + a
+                wseg = b - a
+                if wseg < min_w or wseg > 2.0 * max_w:
+                    continue
 
-                    cur_dif = abs(np.mean(masked_piano[y_ul + 5:y_ul + 10, x_ul_b + i - 1: x_ul_b + i]) - np.mean(
-                        masked_piano[y_ul + 5:y_ul + 10, x_ul_b + i: x_ul_b + i + 1]))
+                if wseg > 1.30 * w_med:
+                    xx, wseg = self._tighten_black_bbox(strip_eq, xx, y, wseg, hh)
 
-                    if cur_dif > max_dif:
-                        max_dif = cur_dif
-                        x_ul_b = x_ul_b + i
+                name = f"BK_{idx}"
+                x_abs1 = x_off + xx
+                x_abs2 = x_off + xx + wseg
+                y_abs1 = y_off + y_strip0 + y
+                y_abs2 = y_off + y_strip0 + y + hh
 
-                max_dif = 15
-                for i in range(-int(black_w / 4), int(black_w / 4)):
+                black_keys[name] = BlackKey(
+                    roi_gray[(y_strip0 + y):(y_strip0 + y + hh), xx:(xx + wseg)],
+                    y_abs1, x_abs1, y_abs2, x_abs2, name
+                )
+                idx += 1
 
-                    cur_dif = abs(np.mean(masked_piano[y_ul + 5:y_ul + 10, x_dr_b + i - 1: x_dr_b + i]) - np.mean(
-                        masked_piano[y_ul + 5:y_ul + 10, x_dr_b + i: x_dr_b + i + 1]))
+        return dict(sorted(black_keys.items(), key=lambda kv: kv[1].coords()[1]))
 
-                    if cur_dif > max_dif:
-                        max_dif = cur_dif
-                        x_dr_b = x_dr_b + i
-                if y_dr_b > 0:
-                    black_key = BlackKey(masked_piano[y_ul_b: y_dr_b, x_ul_b:x_dr_b],
-                                         y_ul_b, x_ul_b, y_dr_b, x_dr_b, name_cur)
-                    black_keys[name_cur] = black_key
-
-
-        return black_keys
-
-    def _find_white_keys_w(self, image):
+    def _find_white_keys_w(self, image, yk0, yk1, n_white=52):
         """
         image: grayscale ROI (uint8)
-        returns: (image, white_key_w)
+        returns: boundaries (x positions), length n_white+1
+        Robust: grid-first (w/52), peaks only for snapping.
         """
 
-        # 1) smooth
+        # 1) smooth + boost contrast
         gray = cv2.GaussianBlur(image, (5, 5), 0)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        gray = clahe.apply(gray)
 
         # 2) vertical edges only (Sobel x)
         gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
         gx = np.abs(gx)
 
-        # 3) use only the key area (ignore top border reflections)
+        # 3) use only the key area (lower part of the keyboard band)
         h, w = gx.shape
-        y1 = int(0.15 * h)
-        y2 = int(0.95 * h)
+        band_h = (yk1 - yk0 + 1)
+
+        y1 = yk0 + int(0.65 * band_h)
+        y2 = yk0 + int(0.98 * band_h)
+        y1 = max(0, min(h - 1, y1))
+        y2 = max(0, min(h, y2))
         gx_roi = gx[y1:y2, :]
 
-        # 4) vertical projection (sum of vertical edge strength per column)
+        # 4) vertical projection
         proj = gx_roi.sum(axis=0)
-
-        # 5) normalize + smooth 1D signal
         proj = proj / (proj.max() + 1e-9)
         proj = cv2.GaussianBlur(proj.reshape(1, -1), (1, 31), 0).ravel()
 
-        # 6) find peaks (simple threshold + local max)
-        thr = 0.35  # loosen if too few peaks: 0.25
-        peaks = []
+        # ---- expected grid step ----
+        step0 = w / float(n_white)
+        min_dist = int(max(3, 0.5 * step0))
+        snap_r = 0.35 * step0
+
+        # 5) collect peak candidates (simple local maxima)
+        thr = 0.20 * proj.max()
+        cand = []
         for x in range(2, w - 2):
             if proj[x] > thr and proj[x] >= proj[x - 1] and proj[x] >= proj[x + 1]:
-                peaks.append(x)
+                cand.append(x)
+        cand = np.array(cand, dtype=np.int32)
 
-        if len(peaks) < 10:
-            raise ValueError("Too few vertical borders found from projection. Increase contrast or lower thr.")
+        # 6) non-maximum suppression so peaks aren't too dense
+        if cand.size > 0:
+            order = cand[np.argsort(proj[cand])[::-1]]
+            kept = []
+            for x in order:
+                if all(abs(x - k) >= min_dist for k in kept):
+                    kept.append(int(x))
+            kept = np.array(sorted(kept), dtype=np.int32)
+        else:
+            kept = np.array([], dtype=np.int32)
 
-        # 7) remove near-duplicates
-        filtered = [peaks[0]]
-        for x in peaks[1:]:
-            if x - filtered[-1] >= 4:
-                filtered.append(x)
-        filtered = np.array(filtered)
+        # 7) choose best phase offset for the grid (maximize proj on boundaries)
+        offsets = np.linspace(0.0, max(1.0, step0 - 1.0), 25)
+        best_off, best_score = 0.0, -1.0
+        for off in offsets:
+            xs = off + np.arange(0, n_white + 1) * step0
+            xi = np.clip(xs.astype(np.int32), 0, w - 1)
+            score = float(proj[xi].sum())
+            if score > best_score:
+                best_score, best_off = score, off
 
-        # 8) estimate typical spacing (median of differences)
-        diffs = np.diff(filtered)
-        diffs = diffs[(diffs >= 4) & (diffs <= 80)]  # plausible spacing in ROI
-        if len(diffs) == 0:
-            raise ValueError("No plausible border spacings from projection.")
+        grid = best_off + np.arange(0, n_white + 1) * step0
 
-        white_key_w = float(np.median(diffs))
+        # 8) snap each grid boundary to nearest strong peak (if any)
+        out = []
+        for g in grid:
+            if kept.size > 0:
+                near = kept[np.abs(kept - g) <= snap_r]
+            else:
+                near = np.array([], dtype=np.int32)
 
-        self.logger.info(f"The width of white key is {white_key_w}")
-        return image, white_key_w
+            if near.size > 0:
+                x = int(near[np.argmax(proj[near])])
+            else:
+                x = int(round(g))
+            out.append(x)
+
+        out = np.array(out, dtype=np.int32)
+        out[0] = 0
+        out[-1] = w - 1
+        out = np.clip(out, 0, w - 1)
+
+        # enforce strictly increasing
+        for i in range(1, len(out)):
+            if out[i] <= out[i - 1]:
+                out[i] = min(w - 1, out[i - 1] + 1)
+
+        return out
 
 
     def _find_orientation(self, image, y, h):
@@ -677,41 +846,29 @@ class KeysExtractorThroughLines:
             to_draw_img = self.rotate_image(to_draw_img, 180)
             angle += 180
 
-        # find width of the white key
-        masked_piano, white_key_w = self._find_white_keys_w(masked_piano)
+        # build a tight ROI from masked_piano to kill black padding
+        ys, xs = np.where(masked_piano > 5)
+        if len(ys) == 0 or len(xs) == 0:
+            raise ValueError("No non-zero pixels found in masked piano ROI.")
 
-        img_h, img_w = masked_piano.shape[:2]
+        y0, y1 = ys.min(), ys.max()
+        x0, x1 = xs.min(), xs.max()
 
-        if white_key_w is None or (isinstance(white_key_w, float) and math.isnan(white_key_w)):
-            # assume ~20–30 white keys visible in the frame
-            estimated_white_keys = 52
-            white_key_w = img_w / estimated_white_keys
-            self.logger.warning(f"white_key_w was NaN. Fallback used: {white_key_w}")
+        roi_gray = masked_piano[y0:y1 + 1, x0:x1 + 1]
+        roi_rgb = to_draw_img[y0:y1 + 1, x0:x1 + 1]
+        _save_step("03b_tight_roi", roi_rgb)
 
-        # find coordinates of white keys
-        # white_keys_coords, white_key_h = self._find_white_keys_coords(masked_piano, x, y, w, h, white_key_w)
-        # self._draw_keys_coords(white_keys_coords, to_draw_img)
+        yk0, yk1 = self._keyboard_band_from_vertical_edges(roi_gray)
 
-        # stable height for white keys (use ROI height)
-        white_key_h = int(0.95 * h)
+        dbg = cv2.cvtColor(roi_gray, cv2.COLOR_GRAY2RGB)
+        cv2.rectangle(dbg, (0, yk0), (roi_gray.shape[1] - 1, yk1), (0, 255, 0), 2)
+        _save_step("03c_keyboard_band", dbg)
 
-        # build uniform white-key grid in full-image coordinates
-        white_keys_coords = self._build_white_keys_grid(x, y, w, h, white_key_w, white_key_h, masked_piano)
+        boundaries = self._find_white_keys_w(roi_gray, yk0, yk1)
 
-        # --- FIX: force reasonable white-key widths ---
-        w_target = int(round(white_key_w))
-        for k in white_keys_coords.values():
-            # coords() returns (y1,x1,y2,x2) in your code style
-            y1, x1, y2, x2 = k.coords()
-
-            # keep left border, force width
-            x2_new = x1 + w_target
-
-            # prevent overflow outside image
-            x2_new = min(x2_new, masked_piano.shape[1] - 1)
-
-            # write back (adjust attribute names if different)
-            k.x2 = x2_new
+        white_keys_coords = self._build_white_keys_from_boundaries(
+            roi_gray, x0, y0, yk0, yk1, boundaries, n_white=52
+        )
 
         # masked_piano is grayscale ROI with background removed
         # to_draw_img is rotated full image used for overlays
@@ -744,6 +901,12 @@ class KeysExtractorThroughLines:
             cv2.rectangle(white_vis, (x1, y1), (x2, y2), (0, 255, 0), 2)
         _save_step("05_white_keys_only", white_vis)
 
+
+        # find h and w of black keys
+        black_key_w = self._find_black_keys_w(masked_piano, x, y, w, h, white_key_h, white_keys_coords)
+        black_keys_coords = self._find_black_keys_coords(masked_piano, black_key_w, white_keys_coords)
+        
+        # black-only overlay
         black_vis = deepcopy(to_draw_img)
         if len(black_vis.shape) == 2:
             black_vis = cv2.cvtColor(black_vis, cv2.COLOR_GRAY2RGB)
@@ -772,7 +935,7 @@ def main():
     :return:
     """
     keys_extractor = KeysExtractorThroughLines()
-    img_path = "G:\\POLIMI_ACADEMICS\\First_Year\\1st_Semester\\099993_Image_Analysis_&_Computer_Vision\\Projects_&_Homeworks\\Project\\IACV-Project\\data\\frames\\piano_video_1\\cleaned\\cleaned_frame_2.png"
+    img_path = os.path.join("data", "frames", "piano_video_1", "cleaned", "cleaned_frame_2.png")
     image = skimage.io.imread(img_path)
 
     keys_extractor(image)
